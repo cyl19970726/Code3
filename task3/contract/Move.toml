@@ -1,0 +1,17 @@
+[package]
+name = "code3_bounty"
+version = "1.0.0"
+authors = ["Code3 Team"]
+
+[addresses]
+code3 = "_"
+
+[dev-addresses]
+code3 = "0xcafe"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-core.git"
+rev = "mainnet"
+subdir = "aptos-move/framework/aptos-framework"
+
+[dev-dependencies]
