@@ -291,7 +291,7 @@ export class AptosClient {
    * Accept a bounty (mark as Started)
    */
   async acceptBounty(bountyId: string): Promise<TransactionResult> {
-    return this.submitTransaction("accept_bounty", [], [bountyId]);
+    return this.submitTransaction("accept_bounty", [], [parseInt(bountyId, 10)]);
   }
 
   /**
@@ -309,7 +309,7 @@ export class AptosClient {
       "submit_pr",
       [],
       [
-        bountyId,
+        parseInt(bountyId, 10),
         prUrl,
         Array.from(prDigestBytes), // vector<u8>
       ]
@@ -320,21 +320,21 @@ export class AptosClient {
    * Mark a PR as merged (sponsor only)
    */
   async markMerged(bountyId: string, prUrl: string): Promise<TransactionResult> {
-    return this.submitTransaction("mark_merged", [], [bountyId, prUrl]);
+    return this.submitTransaction("mark_merged", [], [parseInt(bountyId, 10), prUrl]);
   }
 
   /**
    * Claim payout after cooling period (winner only)
    */
   async claimPayout(bountyId: string): Promise<TransactionResult> {
-    return this.submitTransaction("claim_payout", [], [bountyId]);
+    return this.submitTransaction("claim_payout", [], [parseInt(bountyId, 10)]);
   }
 
   /**
    * Cancel a bounty (sponsor only, before PR submission)
    */
   async cancelBounty(bountyId: string): Promise<TransactionResult> {
-    return this.submitTransaction("cancel_bounty", [], [bountyId]);
+    return this.submitTransaction("cancel_bounty", [], [parseInt(bountyId, 10)]);
   }
 
   /**
