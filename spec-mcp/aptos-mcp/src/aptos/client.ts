@@ -97,7 +97,10 @@ export class AptosClient {
         }
       );
 
-      return result[0] as T;
+      // Aptos SDK returns the raw result array from the contract
+      // For tuple-returning functions, this IS the tuple array
+      // DON'T extract [0] - return the whole result
+      return result as T;
     } catch (error) {
       throw parseAptosError(error);
     }
@@ -234,11 +237,12 @@ export class AptosClient {
       // Convert issue_hash string to vector<u8>
       const issueHashBytes = Buffer.from(issueHash, "hex");
 
-      const result = await this.view<string>("get_bounty_by_issue_hash", [], [
+      // Returns single u64 value wrapped in array: ["4"]
+      const result = await this.view<string[]>("get_bounty_by_issue_hash", [], [
         Array.from(issueHashBytes),
       ]);
 
-      return result.toString();
+      return result[0].toString();
     } catch (error) {
       throw parseAptosError(error);
     }
@@ -249,10 +253,11 @@ export class AptosClient {
    */
   async listBounties(): Promise<string[]> {
     try {
-      const result = await this.view<any[]>("list_bounties", [], []);
+      // Returns vector<u64> wrapped in array: [["1", "2", "3", "4"]]
+      const result = await this.view<string[][]>("list_bounties", [], []);
 
-      // Convert to string array
-      return result.map((id) => id.toString());
+      // Extract inner array and convert to string array
+      return result[0].map((id) => id.toString());
     } catch (error) {
       throw parseAptosError(error);
     }
@@ -263,10 +268,11 @@ export class AptosClient {
    */
   async getBountiesBySponsor(sponsor: string): Promise<string[]> {
     try {
-      const result = await this.view<any[]>("get_bounties_by_sponsor", [], [sponsor]);
+      // Returns vector<u64> wrapped in array: [["1", "2", "3"]]
+      const result = await this.view<string[][]>("get_bounties_by_sponsor", [], [sponsor]);
 
-      // Convert to string array
-      return result.map((id) => id.toString());
+      // Extract inner array and convert to string array
+      return result[0].map((id) => id.toString());
     } catch (error) {
       throw parseAptosError(error);
     }
@@ -277,10 +283,11 @@ export class AptosClient {
    */
   async getBountiesByWinner(winner: string): Promise<string[]> {
     try {
-      const result = await this.view<any[]>("get_bounties_by_winner", [], [winner]);
+      // Returns vector<u64> wrapped in array: [["1", "2", "3"]]
+      const result = await this.view<string[][]>("get_bounties_by_winner", [], [winner]);
 
-      // Convert to string array
-      return result.map((id) => id.toString());
+      // Extract inner array and convert to string array
+      return result[0].map((id) => id.toString());
     } catch (error) {
       throw parseAptosError(error);
     }

@@ -185,6 +185,61 @@ pnpm test
 
 ---
 
+## 测试策略
+
+### 测试层级
+1. **单元测试**：每个 MCP 工具独立测试
+2. **集成测试**：MCP 工具与外部服务交互测试（GitHub API、Aptos 链）
+3. **E2E 测试**：完整用户流程测试（Issue → PR → 赏金领取）
+
+### ABI 一致性测试 ⭐
+> 参考：[TRUTH.md](../../TRUTH.md) ADR-011（Contract/Client Type Consistency Mechanism）
+
+**问题背景**：Aptos Move 合约与 TypeScript 客户端存在类型系统差异，可能导致：
+- 类型转换错误（string vs u64）
+- 返回值解析错误（tuple vs object）
+- Option<T> 处理错误（`{vec: []}` 格式）
+
+**解决方案**：
+- **ABI 签名验证**：从链上获取 ABI，验证函数签名与客户端一致
+- **实际调用测试**：真实链上调用验证返回值解析
+- **类型转换规范**：明确 Move ↔ TypeScript 映射表（详见 [09-安全策略](./09-security.md) 第 3.4 节）
+
+**测试文件**：
+```bash
+# ABI 一致性测试
+Code3/spec-mcp/aptos-mcp/tests/integration/abi-consistency.test.ts
+
+# 运行测试
+cd Code3/spec-mcp/aptos-mcp
+pnpm test tests/integration/abi-consistency.test.ts
+```
+
+**关键测试用例**：
+```typescript
+describe("ABI Consistency Tests", () => {
+  // 验证函数签名
+  it("get_bounty should accept u64 and return tuple with 12 fields", () => {
+    expect(func!.params).toEqual(["u64"]);
+    expect(func!.return.length).toBe(12);
+  });
+
+  // 验证返回值解析
+  it("should parse get_bounty return value correctly (array format)", async () => {
+    const bounty = await client.getBounty("1");
+    expect(typeof bounty.id).toBe("string");
+    expect(typeof bounty.status).toBe("number");
+  });
+});
+```
+
+### CI/CD 集成（M3 阶段）
+- 合约部署后自动运行 ABI 一致性测试
+- aptos-chain-mcp 代码变更后自动运行测试
+- 测试失败阻塞 PR 合并
+
+---
+
 ## 参考资源
 
 ### 内部文档

@@ -207,6 +207,172 @@ if (!verifyWebhookSignature(payload, signature, GITHUB_WEBHOOK_SECRET)) {
 }
 ```
 
+### 3.4 类型转换规范（Move ↔ TypeScript）
+
+> 参考：[TRUTH.md](../../TRUTH.md) ADR-011（Contract/Client Type Consistency Mechanism）
+
+#### 问题背景
+
+Aptos Move 合约与 TypeScript 客户端之间存在类型系统差异，导致：
+1. **类型转换错误**：JavaScript string 传递给需要 u64 number 的合约函数
+2. **返回值解析错误**：合约返回 Move tuple（数组），客户端期望 JavaScript object
+3. **Option<T> 处理错误**：Move 的 `Option<T>` 序列化为 `{vec: []}`，需要 unwrap 逻辑
+
+**示例 Bug**（已修复）:
+```typescript
+// ❌ 错误：传递 string 给 u64 参数
+await client.getBounty(bountyId);  // bountyId = "1"
+
+// ✅ 正确：转换为 number
+await client.getBounty(parseInt(bountyId, 10));  // bountyId = 1
+```
+
+#### Move ↔ TypeScript 类型映射表
+
+| Move 类型 | 链上序列化格式 | TypeScript 类型 | 转换逻辑 | 示例 |
+|----------|--------------|----------------|---------|------|
+| `u64` | `"123"` (string) | `string` | 输入: `parseInt(val, 10)` | `parseInt(bountyId, 10)` |
+| `address` | `"0xabc..."` | `string` | 直接使用 | `sponsor` |
+| `vector<u8>` | `[1,2,3]` (array) | `Uint8Array` | `Array.from(bytes)` | `Array.from(issueHashBytes)` |
+| `String` | `"text"` | `string` | 直接使用 | `repo_url` |
+| `Option<T>` | `{vec: []}` 或 `{vec: [value]}` | `T \| null` | `unwrapOption(opt)` | `unwrapOption(winner)` |
+| `Object<T>` | `{inner: "0x..."}` | `string` | `obj.inner` | `asset.inner` |
+| `tuple` | `[a, b, c]` (array) | `[A, B, C]` | 数组解构 | `const [id, sponsor, ...] = result` |
+
+#### 实现示例
+
+**1. 输入参数转换（u64）**
+
+```typescript
+// spec-mcp/aptos-mcp/src/aptos/client.ts
+async getBounty(bountyId: string): Promise<BountyInfo | null> {
+  // ✅ 转换 string → number（u64）
+  const result = await this.view<any>("get_bounty", [], [parseInt(bountyId, 10)]);
+  // ...
+}
+
+async acceptBounty(bountyId: string): Promise<TransactionResult> {
+  // ✅ 转换 string → number（u64）
+  return this.submitTransaction("accept_bounty", [], [parseInt(bountyId, 10)]);
+}
+```
+
+**2. 返回值解析（tuple → object）**
+
+```typescript
+// Move 合约返回 tuple（数组格式）
+#[view]
+public fun get_bounty(bounty_id: u64): (u64, address, Option<address>, ...) {
+  (bounty.id, bounty.sponsor, bounty.winner, ...)
+}
+
+// TypeScript 客户端解析
+async getBounty(bountyId: string): Promise<BountyInfo | null> {
+  const result = await this.view<any>("get_bounty", [], [parseInt(bountyId, 10)]);
+
+  // ✅ 检查数组格式（而非 object）
+  if (!result || !Array.isArray(result) || result.length < 12) {
+    return null;
+  }
+
+  // ✅ 数组解构
+  const [
+    id,
+    sponsor,
+    winner,          // Option<address>
+    repo_url,
+    issue_hash,
+    pr_url,          // Option<String>
+    asset,           // Object<Metadata>
+    amount,
+    status,
+    merged_at,       // Option<u64>
+    cooling_until,   // Option<u64>
+    created_at,
+  ] = result;
+
+  // 返回 TypeScript object
+  return {
+    id: id?.toString() || bountyId,
+    sponsor: sponsor || "",
+    winner: unwrapOption(winner),
+    repo_url: repo_url || "",
+    issue_hash: issue_hash || "",
+    pr_url: unwrapOption(pr_url),
+    asset: asset?.inner || asset || "",
+    amount: amount?.toString() || "0",
+    status: status !== undefined ? status : 0,
+    merged_at: unwrapOption(merged_at),
+    cooling_until: unwrapOption(cooling_until),
+    created_at: created_at?.toString() || "0",
+  };
+}
+```
+
+**3. Option<T> 处理**
+
+```typescript
+// 辅助函数：unwrap Move Option<T>
+const unwrapOption = (opt: any) => {
+  if (opt && typeof opt === 'object' && 'vec' in opt) {
+    return opt.vec.length > 0 ? opt.vec[0] : null;
+  }
+  return opt || null;
+};
+
+// 使用示例
+winner: unwrapOption(winner),        // Option<address> → string | null
+pr_url: unwrapOption(pr_url),        // Option<String> → string | null
+merged_at: unwrapOption(merged_at),  // Option<u64> → string | null
+```
+
+**4. Object<T> 处理**
+
+```typescript
+// Move 合约返回 Object<Metadata>
+asset: Object<Metadata>
+
+// 链上序列化为 {inner: "0x..."}
+asset: {inner: "0xabc...def"}
+
+// TypeScript 客户端提取 inner
+asset: asset?.inner || asset || "",
+```
+
+#### 一致性测试
+
+**测试文件**: [spec-mcp/aptos-mcp/tests/integration/abi-consistency.test.ts](../../spec-mcp/aptos-mcp/tests/integration/abi-consistency.test.ts)
+
+**测试策略**:
+1. **ABI 签名验证**：从链上获取 ABI，验证函数签名与客户端一致
+2. **实际调用测试**：真实链上调用验证返回值解析
+3. **类型转换测试**：验证所有 u64 参数正确转换
+
+**示例测试**:
+```typescript
+describe("ABI Consistency Tests", () => {
+  it("get_bounty should accept u64 and return tuple with 12 fields", () => {
+    const func = abi.exposed_functions.find((f) => f.name === "get_bounty");
+    expect(func!.params).toEqual(["u64"]);  // ✅ 验证参数类型
+    expect(func!.return.length).toBe(12);    // ✅ 验证返回值字段数
+  });
+
+  it("should parse get_bounty return value correctly (array format)", async () => {
+    const bounty = await client.getBounty("1");
+    if (bounty) {
+      expect(typeof bounty.id).toBe("string");      // ✅ 验证类型转换
+      expect(typeof bounty.status).toBe("number");  // ✅ 验证类型转换
+    }
+  });
+});
+```
+
+**运行测试**:
+```bash
+cd Code3/spec-mcp/aptos-mcp
+pnpm test tests/integration/abi-consistency.test.ts
+```
+
 ---
 
 ## 4. 审计与日志

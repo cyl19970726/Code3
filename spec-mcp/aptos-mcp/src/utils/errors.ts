@@ -80,7 +80,23 @@ export function mapContractError(moveErrorCode: number): ErrorCode {
  * Parse Aptos transaction error
  */
 export function parseAptosError(error: any): AptosChainError {
-  // Check for Move abort code
+  // Check for Move abort code in error.message (from Aptos SDK)
+  if (error.message && typeof error.message === "string") {
+    // Format: "Move abort in 0xADDRESS::MODULE: E_ERROR_NAME(0xCODE): "
+    const abortMatch = error.message.match(/E_(\w+)\(0x(\w+)\)/);
+    if (abortMatch) {
+      const errorName = abortMatch[1];
+      const errorCode = parseInt(abortMatch[2], 16);
+      const mappedCode = mapContractError(errorCode);
+      return new AptosChainError(
+        mappedCode,
+        `Contract error: ${errorName}`,
+        { original_message: error.message, error_code: errorCode }
+      );
+    }
+  }
+
+  // Check for Move abort code in vm_status
   if (error.vm_status && error.vm_status.includes("ABORTED")) {
     const match = error.vm_status.match(/code (\d+)/);
     if (match) {
