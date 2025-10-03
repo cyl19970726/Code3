@@ -1,6 +1,6 @@
 {
   "name": "@code3-team/aptos-chain-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Aptos chain integration MCP tools for Code3",
   "type": "module",
   "main": "dist/index.js",
