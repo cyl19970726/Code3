@@ -33,6 +33,8 @@ import {
   handlePlanContext,
   tasksContextTool,
   handleTasksContext,
+  initTool,
+  handleInit,
 } from "./tools/index.js";
 
 const server = new Server(
@@ -95,6 +97,7 @@ const allTools = [
   specContextTool,
   planContextTool,
   tasksContextTool,
+  initTool,
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -116,6 +119,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "tasks-context":
         result = await handleTasksContext(args || {});
+        break;
+      case "init":
+        result = await handleInit(args || {});
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);

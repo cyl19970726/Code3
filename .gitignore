@@ -13,8 +13,13 @@ build/
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.*.local
+
+# Environment files (unified under Code3/)
+.env.aptos-mcp
+.env.integration-test
 
 # Logs
 logs/
@@ -96,4 +101,6 @@ out/
 .vercel
 
 # Agent context (user-specific)
-.agent-context/observe_examples/
+.agent-context/
+
+e2e/

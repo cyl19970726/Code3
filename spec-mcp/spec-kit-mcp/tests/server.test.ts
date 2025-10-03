@@ -44,11 +44,12 @@ describe('Prompts and Tools (Source Code Verification)', () => {
   });
 
   it('should import all tool definitions', async () => {
-    const { specContextTool, planContextTool, tasksContextTool } = await import('../src/tools/index.js');
+    const { specContextTool, planContextTool, tasksContextTool, initTool } = await import('../src/tools/index.js');
 
     expect(specContextTool).toBeDefined();
     expect(planContextTool).toBeDefined();
     expect(tasksContextTool).toBeDefined();
+    expect(initTool).toBeDefined();
   });
 
   it('specify prompt should have correct structure', async () => {
@@ -123,6 +124,16 @@ describe('Prompts and Tools (Source Code Verification)', () => {
     expect(tasksContextTool.name).toBe('tasks-context');
     expect(tasksContextTool.description).toBeDefined();
     expect(tasksContextTool.inputSchema).toBeDefined();
+  });
+
+  it('init tool should have correct structure', async () => {
+    const { initTool } = await import('../src/tools/index.js');
+
+    expect(initTool.name).toBe('init');
+    expect(initTool.description).toBeDefined();
+    expect(initTool.inputSchema).toBeDefined();
+    expect(initTool.inputSchema.properties).toHaveProperty('targetDir');
+    expect(initTool.inputSchema.properties).toHaveProperty('force');
   });
 });
 
