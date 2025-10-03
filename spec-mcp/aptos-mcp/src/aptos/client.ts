@@ -173,25 +173,48 @@ export class AptosClient {
       // Convert string to number for u64 parameter
       const result = await this.view<any>("get_bounty", [], [parseInt(bountyId, 10)]);
 
-      // If bounty not found, contract returns empty result
-      if (!result || result.id === undefined) {
+      // Contract returns tuple/array: [id, sponsor, winner, repo_url, issue_hash, pr_url, asset, amount, status, merged_at, cooling_until, created_at]
+      if (!result || !Array.isArray(result) || result.length < 12) {
         return null;
       }
 
-      // Parse bounty data (contract returns struct fields in order)
+      // Parse tuple fields (destructure array)
+      const [
+        id,
+        sponsor,
+        winner,          // Option<address> as {vec: []}
+        repo_url,
+        issue_hash,
+        pr_url,          // Option<String> as {vec: []}
+        asset,           // Object<Metadata> as {inner: "0x..."}
+        amount,
+        status,
+        merged_at,       // Option<u64> as {vec: []}
+        cooling_until,   // Option<u64> as {vec: []}
+        created_at,
+      ] = result;
+
+      // Helper to extract Option<T> value
+      const unwrapOption = (opt: any) => {
+        if (opt && typeof opt === 'object' && 'vec' in opt) {
+          return opt.vec.length > 0 ? opt.vec[0] : null;
+        }
+        return opt || null;
+      };
+
       return {
-        id: result.id?.toString() || bountyId,
-        sponsor: result.sponsor || "",
-        winner: result.winner || null,
-        repo_url: result.repo_url || "",
-        issue_hash: result.issue_hash || "",
-        pr_url: result.pr_url || null,
-        asset: result.asset || "",
-        amount: result.amount?.toString() || "0",
-        status: result.status !== undefined ? result.status : 0,
-        merged_at: result.merged_at || null,
-        cooling_until: result.cooling_until || null,
-        created_at: result.created_at || 0,
+        id: id?.toString() || bountyId,
+        sponsor: sponsor || "",
+        winner: unwrapOption(winner),
+        repo_url: repo_url || "",
+        issue_hash: issue_hash || "",
+        pr_url: unwrapOption(pr_url),
+        asset: asset?.inner || asset || "",
+        amount: amount?.toString() || "0",
+        status: status !== undefined ? status : 0,
+        merged_at: unwrapOption(merged_at),
+        cooling_until: unwrapOption(cooling_until),
+        created_at: created_at?.toString() || "0",
       };
     } catch (error) {
       // If error is BOUNTY_NOT_FOUND, return null instead of throwing
