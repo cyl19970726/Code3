@@ -1,0 +1,31 @@
+{
+  "name": "@code3/spec-kit-mcp",
+  "version": "0.1.0",
+  "description": "Spec-kit workflow tools as MCP server for Code3",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "spec-kit-mcp": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "fs-extra": "^11.2.0",
+    "handlebars": "^4.7.8",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.7.0",
+    "vitest": "^2.0.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "method": "POST",
+  "path": "/api/auth/login",
+  "description": "Authenticate user with credentials",
+  "request": {
+    "email": "string",
+    "password": "string"
+  },
+  "response": {
+    "token": "string",
+    "user": {
+      "id": "string",
+      "email": "string"
+    }
+  }
+}

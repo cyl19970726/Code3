@@ -1,0 +1,16 @@
+{
+  "method": "POST",
+  "path": "/api/files/upload",
+  "description": "Upload file",
+  "request": {
+    "file": "File",
+    "metadata": {
+      "name": "string"
+    }
+  },
+  "response": {
+    "id": "string",
+    "url": "string",
+    "size": "number"
+  }
+}
