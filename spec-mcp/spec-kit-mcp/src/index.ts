@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 /**
- * spec-kit-mcp 入口
- * 重新导出 server
+ * spec-kit-mcp Entry Point
+ * Direct entry for bin execution
  */
-export * from './server.js';
+import { main } from "./server.js";
+
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});

@@ -164,6 +164,17 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("spec-kit-mcp server running on stdio (Pure MCP + LLM)");
+
+  // Keep process running
+  process.on("SIGINT", () => {
+    console.error("\n[MCP Server] Shutting down...");
+    process.exit(0);
+  });
+
+  process.on("SIGTERM", () => {
+    console.error("\n[MCP Server] Shutting down...");
+    process.exit(0);
+  });
 }
 
 // Export server for testing

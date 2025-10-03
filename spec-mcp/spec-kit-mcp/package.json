@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "spec-kit-mcp": "./dist/server.js"
+    "spec-kit-mcp": "./dist/index.js"
   },
   "files": [
     "dist",
