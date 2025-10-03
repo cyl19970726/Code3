@@ -8,6 +8,73 @@
 
 ---
 
+## Installation & Setup
+
+### Quick Start (npx)
+
+Add to your Claude Code `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "aptos-chain": {
+      "command": "npx",
+      "args": ["-y", "@code3/aptos-chain-mcp"],
+      "env": {
+        "APTOS_CONTRACT_ADDRESS": "YOUR_CONTRACT_ADDRESS",
+        "APTOS_PRIVATE_KEY": "YOUR_PRIVATE_KEY",
+        "APTOS_NETWORK": "testnet"
+      }
+    }
+  }
+}
+```
+
+### Environment Variables
+
+Create a `.env` file:
+
+```bash
+APTOS_CONTRACT_ADDRESS=0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1
+APTOS_PRIVATE_KEY=0x...
+APTOS_NETWORK=testnet
+```
+
+**Important**: This MCP server requires the Code3 bounty contract to be deployed on Aptos. The contract source code is located at:
+- **Contract Source**: [Code3-Workspace/task3/aptos/sources/bounty.move](https://github.com/cyl19970726/Code3-Workspace/tree/main/task3/aptos)
+- **Deployment Guide**: See [task3/aptos/README.md](https://github.com/cyl19970726/Code3-Workspace/blob/main/task3/aptos/README.md)
+
+**No ABI file needed**: This MCP server calls contract functions directly using the Aptos TypeScript SDK (`@aptos-labs/ts-sdk`). Function signatures are defined in the TypeScript code.
+
+### Local Development
+
+```bash
+# Clone and build
+git clone https://github.com/cyl19970726/Code3-Workspace.git
+cd Code3-Workspace/spec-mcp/aptos-chain-mcp
+npm install
+npm run build
+
+# Link locally
+npm link
+
+# Add to .mcp.json
+{
+  "mcpServers": {
+    "aptos-chain": {
+      "command": "aptos-chain-mcp",
+      "env": {
+        "APTOS_CONTRACT_ADDRESS": "${APTOS_CONTRACT_ADDRESS}",
+        "APTOS_PRIVATE_KEY": "${APTOS_PRIVATE_KEY}",
+        "APTOS_NETWORK": "${APTOS_NETWORK:-testnet}"
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -297,6 +364,29 @@ APTOS_PRIVATE_KEY=0x<your_private_key>   # For write operations
 - ⚠️ **NEVER commit `.env` to git**
 - Use environment-specific files (`.env.testnet`, `.env.mainnet`)
 - For production, use system keychain or secret management service
+
+### Contract Deployment
+
+**Before using this MCP server**, you must deploy the Code3 bounty contract to Aptos:
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/cyl19970726/Code3-Workspace.git
+   cd Code3-Workspace/task3/aptos
+   ```
+
+2. **Deploy the contract** (see [task3/aptos/README.md](https://github.com/cyl19970726/Code3-Workspace/blob/main/task3/aptos/README.md)):
+   ```bash
+   # Deploy to testnet
+   aptos move publish --network testnet --named-addresses code3=<your_address>
+
+   # Or use the deployment script
+   ./scripts/deploy_testnet.sh
+   ```
+
+3. **Copy the contract address** to your `.env` file as `APTOS_CONTRACT_ADDRESS`.
+
+**Architecture Note**: This MCP server does **not** use ABI files. It calls contract functions directly using the Aptos TypeScript SDK (`@aptos-labs/ts-sdk`). Function signatures are hardcoded in the TypeScript source code (see `src/tools/*.ts`).
 
 ### Read-Only Mode
 
