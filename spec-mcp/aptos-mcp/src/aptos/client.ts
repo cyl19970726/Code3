@@ -170,7 +170,8 @@ export class AptosClient {
    */
   async getBounty(bountyId: string): Promise<BountyInfo | null> {
     try {
-      const result = await this.view<any>("get_bounty", [], [bountyId]);
+      // Convert string to number for u64 parameter
+      const result = await this.view<any>("get_bounty", [], [parseInt(bountyId, 10)]);
 
       // If bounty not found, contract returns empty result
       if (!result || result.id === undefined) {
