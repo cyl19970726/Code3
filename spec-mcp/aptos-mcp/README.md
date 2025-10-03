@@ -1,4 +1,4 @@
-# @code3/aptos-chain-mcp
+# @code3-team/aptos-chain-mcp
 
 > Aptos Chain MCP Server - Blockchain interaction tools for Code3 bounty management
 >
@@ -19,7 +19,7 @@ Add to your Claude Code `.mcp.json`:
   "mcpServers": {
     "aptos-chain": {
       "command": "npx",
-      "args": ["-y", "@code3/aptos-chain-mcp"],
+      "args": ["-y", "@code3-team/aptos-chain-mcp"],
       "env": {
         "APTOS_CONTRACT_ADDRESS": "YOUR_CONTRACT_ADDRESS",
         "APTOS_PRIVATE_KEY": "YOUR_PRIVATE_KEY",
@@ -93,7 +93,7 @@ npm link
 
 ## Overview
 
-`@code3/aptos-chain-mcp` is a Model Context Protocol (MCP) server that provides AI-friendly tools for interacting with the Code3 bounty smart contract on Aptos blockchain.
+`@code3-team/aptos-chain-mcp` is a Model Context Protocol (MCP) server that provides AI-friendly tools for interacting with the Code3 bounty smart contract on Aptos blockchain.
 
 **Key Features**:
 - 6 MCP tools covering the complete bounty lifecycle
@@ -113,7 +113,7 @@ npm link
 ## Architecture
 
 ```
-@code3/aptos-chain-mcp
+@code3-team/aptos-chain-mcp
 ├── src/
 │   ├── aptos/
 │   │   └── client.ts          # Aptos SDK wrapper
@@ -554,7 +554,7 @@ AI: [automatically calls create_bounty tool]
 ### 4. Programmatic Usage
 
 ```typescript
-import { AptosClient } from "@code3/aptos-chain-mcp";
+import { AptosClient } from "@code3-team/aptos-chain-mcp";
 
 const client = new AptosClient({
   network: "testnet",

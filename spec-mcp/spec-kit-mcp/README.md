@@ -1,4 +1,4 @@
-# spec-kit-mcp
+# @code3-team/spec-kit-mcp
 
 > Spec-kit workflow tools as MCP server for Code3
 > **Pure MCP + LLM Architecture** - Prompts guide LLM, Tools provide context
@@ -16,7 +16,7 @@ Add to your Claude Code `.mcp.json`:
   "mcpServers": {
     "spec-kit": {
       "command": "npx",
-      "args": ["-y", "@code3/spec-kit-mcp"]
+      "args": ["-y", "@code3-team/spec-kit-mcp"]
     }
   }
 }

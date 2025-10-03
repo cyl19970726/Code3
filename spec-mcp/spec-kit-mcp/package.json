@@ -1,5 +1,5 @@
 {
-  "name": "@code3/spec-kit-mcp",
+  "name": "@code3-team/spec-kit-mcp",
   "version": "0.1.0",
   "description": "Spec-kit workflow tools as MCP server for Code3",
   "type": "module",
