@@ -106,7 +106,8 @@ export async function handleInit(args: Record<string, any>): Promise<InitResult>
     const scriptsToCopy = [
       'create-new-feature.sh',
       'setup-plan.sh',
-      'check-prerequisites.sh'
+      'check-prerequisites.sh',
+      'common.sh'
     ];
 
     for (const script of scriptsToCopy) {

@@ -3,6 +3,49 @@
 > Spec-kit workflow tools as MCP server for Code3
 > **Pure MCP + LLM Architecture** - Prompts guide LLM, Tools provide context
 
+---
+
+## Installation & Setup
+
+### Quick Start (npx)
+
+Add to your Claude Code `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "spec-kit": {
+      "command": "npx",
+      "args": ["-y", "@code3/spec-kit-mcp"]
+    }
+  }
+}
+```
+
+### Local Development
+
+```bash
+# Clone and build
+git clone https://github.com/cyl19970726/Code3-Workspace.git
+cd Code3-Workspace/spec-mcp/spec-kit-mcp
+npm install
+npm run build
+
+# Link locally
+npm link
+
+# Add to .mcp.json
+{
+  "mcpServers": {
+    "spec-kit": {
+      "command": "spec-kit-mcp"
+    }
+  }
+}
+```
+
+---
+
 ## 概述
 
 spec-kit-mcp 是将 [spec-kit](https://github.com/pimzino/spec-kit) 的 7 个 AI prompts 转换为 MCP (Model Context Protocol) 格式的 MCP Server。它采用 **Pure MCP + LLM** 架构：
