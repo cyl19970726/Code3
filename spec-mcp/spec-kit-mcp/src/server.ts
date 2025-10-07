@@ -35,6 +35,8 @@ import {
   handleTasksContext,
   initTool,
   handleInit,
+  specKitGuideTool,
+  handleSpecKitGuide,
 } from "./tools/index.js";
 
 const server = new Server(
@@ -94,10 +96,11 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 // ========================================
 
 const allTools = [
+  specKitGuideTool,  // ⭐ Call this FIRST
+  initTool,
   specContextTool,
   planContextTool,
   tasksContextTool,
-  initTool,
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -111,6 +114,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     let result: any;
 
     switch (name) {
+      case "spec-kit-guide":
+        result = await handleSpecKitGuide();
+        break;
+      case "init":
+        result = await handleInit(args || {});
+        break;
       case "spec-context":
         result = await handleSpecContext(args || {});
         break;
@@ -119,9 +128,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "tasks-context":
         result = await handleTasksContext(args || {});
-        break;
-      case "init":
-        result = await handleInit(args || {});
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);

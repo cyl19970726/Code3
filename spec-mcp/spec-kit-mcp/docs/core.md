@@ -341,9 +341,773 @@ LLM 返回给用户:
 
 ---
 
-## 4. 内置审批机制
+## 4. 完整开发流程指南（实践）
 
-### 4.1 `/clarify` - 交互式问答审批
+### 4.1 环境准备
+
+#### Step 1: 安装 spec-kit-mcp
+
+**方式一：npx（推荐）**
+```bash
+# 在 Claude Code 的 .mcp.json 中配置
+{
+  "mcpServers": {
+    "spec-kit": {
+      "command": "npx",
+      "args": ["-y", "@code3-team/spec-kit-mcp"]
+    }
+  }
+}
+```
+
+**方式二：本地开发**
+```bash
+# Clone 并构建
+git clone https://github.com/cyl19970726/Code3-Workspace.git
+cd Code3-Workspace/spec-mcp/spec-kit-mcp
+npm install
+npm run build
+npm link
+
+# 配置 .mcp.json
+{
+  "mcpServers": {
+    "spec-kit": {
+      "command": "spec-kit-mcp"
+    }
+  }
+}
+```
+
+#### Step 2: 初始化项目工作区
+
+```bash
+# 创建项目目录
+mkdir my-awesome-project
+cd my-awesome-project
+
+# 初始化 Git（必须）
+git init
+touch README.md
+git add .
+git commit -m "Initial commit"
+```
+
+**重要**：spec-kit-mcp 依赖 Git 来管理分支和提交历史。
+
+### 4.2 Stage 0: 初始化 .specify/ 结构
+
+**目标**：创建 spec-kit 工作流所需的脚本、模板、宪法
+
+**执行**：
+```bash
+# 在 Claude Code 中调用 init Tool
+使用 init tool
+Arguments: { projectPath: "/path/to/my-awesome-project" }
+```
+
+**LLM 执行流程**：
+1. 调用 init Tool
+2. Tool 在项目根目录创建 `.specify/` 结构：
+   ```
+   .specify/
+   ├── scripts/bash/
+   │   ├── create-new-feature.sh      # 创建功能分支和 spec 文件
+   │   ├── setup-plan.sh              # 创建 plan.md
+   │   ├── check-prerequisites.sh     # 检查前置条件
+   │   └── common.sh                  # 通用函数
+   ├── templates/
+   │   ├── spec-template.md           # 规格模板
+   │   ├── plan-template.md           # 计划模板
+   │   └── tasks-template.md          # 任务模板
+   └── memory/
+       └── constitution.md            # 项目宪法（设计原则）
+   ```
+
+**验证**：
+```bash
+ls -R .specify/
+# 预期输出：
+# .specify/:
+# memory  scripts  templates
+#
+# .specify/memory:
+# constitution.md
+#
+# .specify/scripts:
+# bash
+#
+# .specify/scripts/bash:
+# check-prerequisites.sh  common.sh  create-new-feature.sh  setup-plan.sh
+#
+# .specify/templates:
+# plan-template.md  spec-template.md  tasks-template.md
+```
+
+**完成标志**：✅ 4 个脚本 + 3 个模板 + 1 个宪法文件
+
+---
+
+### 4.3 Stage 1: 创建规格（spec.md）
+
+**目标**：根据需求描述生成详细的功能规格文档
+
+**输入**：需求描述（支持中文）
+
+**执行**：
+```
+# 在 Claude Code 中
+使用 specify prompt
+Arguments:
+  featureDescription: "每日 todo 工具，支持添加/编辑/删除任务、标记完成、按日期分组、持久化存储"
+```
+
+**LLM 执行流程**：
+
+1. **收到 Prompt 指令**：
+   ```
+   Given: "每日 todo 工具，支持添加/编辑/删除任务..."
+
+   Do this:
+   1. Run: .specify/scripts/bash/create-new-feature.sh --json "每日 todo 工具"
+   2. Load: .specify/templates/spec-template.md
+   3. Generate spec.md with:
+      - 12-20 detailed requirements
+      - 4-6 entities with attributes
+      - 3-5 Given-When-Then scenarios
+      - 8+ step execution flow
+      - 8,000-12,000 characters total
+   ```
+
+2. **运行脚本创建分支**：
+   ```bash
+   LLM 执行: .specify/scripts/bash/create-new-feature.sh --json "每日 todo 工具"
+
+   脚本输出:
+   {
+     "BRANCH_NAME": "001-daily-todo",
+     "SPEC_FILE": "specs/001-daily-todo/spec.md"
+   }
+   ```
+
+3. **切换到功能分支**：
+   ```bash
+   git checkout -b 001-daily-todo
+   ```
+
+4. **读取模板并生成 spec.md**：
+   ```bash
+   LLM 读取: .specify/templates/spec-template.md
+   LLM 生成: specs/001-daily-todo/spec.md
+
+   # 生成内容包含：
+   - 15 个详细需求（每个 60-100 字）
+   - 5 个实体（Todo, User, Tag, Category, Settings）
+   - 4 个 Given-When-Then 场景
+   - 10 步执行流程
+   - 总计约 10,000 字符
+   ```
+
+**验证**：
+```
+# 在 Claude Code 中调用 spec-context Tool
+使用 spec-context tool
+Arguments: { specPath: "specs/001-daily-todo/spec.md" }
+
+# Tool 返回：
+{
+  "path": "specs/001-daily-todo/spec.md",
+  "content": "...",
+  "sections": {
+    "overview": "每日 todo 工具...",
+    "requirements": ["FR-001: ...", "FR-002: ...", ...],  // 15 个
+    "entities": ["Todo", "User", "Tag", ...],              // 5 个
+    "scenarios": ["Given user...", ...]                     // 4 个
+  },
+  "metadata": {
+    "featureBranch": "001-daily-todo",
+    "characterCount": 10127                                // >= 8000 ✅
+  }
+}
+```
+
+**完成标志**：
+- ✅ 分支已创建：`001-daily-todo`
+- ✅ spec.md 已生成
+- ✅ 需求数量：12-20 个
+- ✅ 字符数：>= 8,000
+- ✅ 包含 Given-When-Then 场景
+
+---
+
+### 4.4 Stage 2: 澄清需求（可选）
+
+**目标**：识别规格中的歧义点，通过交互式问答澄清
+
+**触发条件**：spec.md 中存在模糊需求
+
+**执行**：
+```
+使用 clarify prompt
+Arguments: { specPath: "specs/001-daily-todo/spec.md" }
+```
+
+**LLM 执行流程**：
+
+1. **收到 Prompt 指令**：
+   ```
+   Given spec: "specs/001-daily-todo/spec.md"
+
+   Do this:
+   1. Run: check-prerequisites.sh --json --paths-only
+   2. Read spec.md
+   3. Scan for 11 types of ambiguities:
+      - Performance unclear
+      - Storage mechanism unclear
+      - UI/UX details missing
+      - Error handling undefined
+      - ...
+   4. Generate max 5 high-priority questions
+   5. Ask user interactively
+   6. Update spec.md with answers
+   ```
+
+2. **扫描歧义点**：
+   ```bash
+   LLM 执行: .specify/scripts/bash/check-prerequisites.sh --json --paths-only
+   LLM 分析: 11 类模糊点
+
+   发现的歧义：
+   - Performance: "快速响应" → 多快？
+   - Storage: "持久化存储" → localStorage? IndexedDB? 数据库？
+   - Priority: 是否支持任务优先级？
+   - Tags: 是否支持标签系统？
+   - Search: 是否支持搜索功能？
+   ```
+
+3. **交互式提问**：
+   ```
+   LLM: Q1: 性能要求是什么？
+        A) 响应时间 < 100ms
+        B) 响应时间 < 500ms
+        C) 响应时间 < 1s
+
+   User: B  ✅
+
+   LLM: [更新 spec.md]
+        ## Clarifications
+        ### Session 2025-10-04
+        - Q: 性能要求？
+        - A: 响应时间 < 500ms (p95)
+
+        ## Requirements (更新)
+        - NFR-001: 所有 UI 操作响应时间必须 < 500ms (p95)
+
+   LLM: Q2: 持久化存储方式？
+        A) localStorage（简单，5MB 限制）
+        B) IndexedDB（复杂，无限制）
+        C) 云端数据库
+
+   User: A  ✅
+
+   LLM: [更新 spec.md]
+        ## Technical Constraints
+        - 使用 localStorage 持久化（限制 5MB）
+   ```
+
+4. **完成所有问题后更新文件**：
+   ```bash
+   LLM 写入: specs/001-daily-todo/spec.md
+   # 更新 Clarifications section
+   # 更新 Requirements section
+   # 更新 Technical Constraints section
+   ```
+
+**验证**：
+```
+使用 spec-context tool
+Arguments: { specPath: "specs/001-daily-todo/spec.md" }
+
+# 验证 Clarifications section 存在
+返回:
+{
+  "sections": {
+    "clarifications": "### Session 2025-10-04\n- Q: ...\n- A: ..."
+  }
+}
+```
+
+**完成标志**：
+- ✅ 提问 5 个问题
+- ✅ 用户全部回答
+- ✅ spec.md 更新完成
+- ✅ Clarifications section 存在
+
+---
+
+### 4.5 Stage 3: 生成计划（plan.md）
+
+**目标**：基于 spec.md 生成技术方案和架构设计
+
+**执行**：
+```
+使用 plan prompt
+Arguments: { specPath: "specs/001-daily-todo/spec.md" }
+```
+
+**LLM 执行流程**：
+
+1. **收到 Prompt 指令**：
+   ```
+   Given spec: "specs/001-daily-todo/spec.md"
+
+   Do this:
+   1. Run: setup-plan.sh --json
+   2. Read: spec.md, constitution.md, plan-template.md
+   3. Generate plan.md with:
+      - Tech stack selection
+      - Architecture design
+      - Data model (TypeScript interfaces)
+      - API design
+      - 5 implementation phases
+   ```
+
+2. **运行脚本**：
+   ```bash
+   LLM 执行: .specify/scripts/bash/setup-plan.sh --json
+
+   脚本输出:
+   {
+     "PLAN_FILE": "specs/001-daily-todo/plan.md",
+     "SPEC_FILE": "specs/001-daily-todo/spec.md"
+   }
+   ```
+
+3. **读取上下文**：
+   ```bash
+   LLM 调用: spec-context tool { specPath: "specs/001-daily-todo/spec.md" }
+   LLM 读取: .specify/memory/constitution.md
+   LLM 读取: .specify/templates/plan-template.md
+   ```
+
+4. **生成 plan.md**：
+   ```markdown
+   # Feature Plan: 每日 Todo 工具
+
+   ## Tech Stack
+   - Frontend: React 18 + TypeScript + Vite
+   - Styling: Tailwind CSS
+   - State: Zustand
+   - Storage: localStorage
+   - Testing: Vitest + React Testing Library
+
+   ## Architecture
+   - Component-based architecture
+   - Custom hooks for business logic
+   - localStorage adapter pattern
+
+   ## Data Model
+   ```typescript
+   interface Todo {
+     id: string;
+     title: string;
+     description?: string;
+     completed: boolean;
+     dueDate?: Date;
+     priority: 'low' | 'medium' | 'high';
+     tags: string[];
+     createdAt: Date;
+     updatedAt: Date;
+   }
+
+   interface TodoStore {
+     todos: Todo[];
+     addTodo: (todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => void;
+     updateTodo: (id: string, updates: Partial<Todo>) => void;
+     deleteTodo: (id: string) => void;
+     toggleComplete: (id: string) => void;
+   }
+   ```
+
+   ## Implementation Phases
+   1. **Phase 1: Setup** - Vite + React + Tailwind + Vitest
+   2. **Phase 2: Tests** - 数据模型测试、localStorage 测试
+   3. **Phase 3: Core** - Todo CRUD、useTodos hook
+   4. **Phase 4: Integration** - 日期分组、优先级过滤、标签
+   5. **Phase 5: Polish** - 响应式、动画、性能优化
+   ```
+
+**验证**：
+```
+使用 plan-context tool
+Arguments: { planPath: "specs/001-daily-todo/plan.md" }
+
+返回:
+{
+  "path": "specs/001-daily-todo/plan.md",
+  "sections": {
+    "techStack": "React 18 + TypeScript + Vite...",
+    "architecture": "Component-based...",
+    "dataModel": "interface Todo { ... }",
+    "phases": ["Setup", "Tests", "Core", "Integration", "Polish"]
+  }
+}
+```
+
+**完成标志**：
+- ✅ plan.md 已生成
+- ✅ 包含技术选型
+- ✅ 包含数据模型（TypeScript interfaces）
+- ✅ 包含 5 个实施阶段
+
+---
+
+### 4.6 Stage 4: 生成任务（tasks.md）
+
+**目标**：将 plan.md 拆分为可执行的任务清单
+
+**执行**：
+```
+使用 tasks prompt
+Arguments: { planPath: "specs/001-daily-todo/plan.md" }
+```
+
+**LLM 执行流程**：
+
+1. **收到 Prompt 指令**：
+   ```
+   Given plan: "specs/001-daily-todo/plan.md"
+
+   Do this:
+   1. Run: check-prerequisites.sh --json
+   2. Read: plan.md, tasks-template.md
+   3. Generate tasks.md with:
+      - 20+ tasks grouped by 5 phases
+      - Each task: clear goal, dependencies, acceptance criteria
+   ```
+
+2. **读取上下文**：
+   ```bash
+   LLM 调用: plan-context tool { planPath: "specs/001-daily-todo/plan.md" }
+   LLM 读取: .specify/templates/tasks-template.md
+   ```
+
+3. **生成 tasks.md**：
+   ```markdown
+   # Tasks: 每日 Todo 工具
+
+   ## Phase 1: Setup (4 tasks)
+   - [ ] **T1.1**: 初始化 Vite + React + TypeScript 项目
+         - 依赖：无
+         - 验收：`npm run dev` 成功启动
+   - [ ] **T1.2**: 配置 Tailwind CSS
+         - 依赖：T1.1
+         - 验收：样式正常渲染
+   - [ ] **T1.3**: 配置 Vitest + React Testing Library
+         - 依赖：T1.1
+         - 验收：`npm test` 运行成功
+   - [ ] **T1.4**: 配置 ESLint + Prettier
+         - 依赖：T1.1
+         - 验收：`npm run lint` 无错误
+
+   ## Phase 2: Tests (6 tasks)
+   - [ ] **T2.1**: 编写 Todo 数据模型测试
+         - 依赖：T1.3
+         - 验收：Todo interface 测试通过
+   - [ ] **T2.2**: 编写 localStorage adapter 测试
+         - 依赖：T1.3
+         - 验收：CRUD 操作测试通过
+   ...
+
+   ## Phase 3: Core (8 tasks)
+   - [ ] **T3.1**: 实现 Todo 数据模型
+   - [ ] **T3.2**: 实现 localStorage adapter
+   - [ ] **T3.3**: 实现 useTodos hook
+   - [ ] **T3.4**: 实现 TodoList 组件
+   ...
+
+   ## Phase 4: Integration (6 tasks)
+   ## Phase 5: Polish (4 tasks)
+
+   Total: 28 tasks
+   ```
+
+**验证**：
+```
+使用 tasks-context tool
+Arguments: { tasksPath: "specs/001-daily-todo/tasks.md" }
+
+返回:
+{
+  "path": "specs/001-daily-todo/tasks.md",
+  "tasks": [
+    { "id": "T1.1", "title": "初始化 Vite...", "phase": "Setup", "status": "pending" },
+    ...
+  ],
+  "phases": {
+    "setup": ["T1.1", "T1.2", "T1.3", "T1.4"],
+    "tests": ["T2.1", "T2.2", ...],
+    "core": ["T3.1", "T3.2", ...],
+    "integration": [...],
+    "polish": [...]
+  },
+  "totalTasks": 28
+}
+```
+
+**完成标志**：
+- ✅ tasks.md 已生成
+- ✅ 任务总数 >= 20
+- ✅ 按 5 个阶段分组
+- ✅ 每个任务包含依赖关系和验收标准
+
+---
+
+### 4.7 Stage 5: 质量分析（可选）
+
+**目标**：检测文档质量问题，生成分析报告
+
+**执行**：
+```
+使用 analyze prompt
+Arguments: {
+  specPath: "specs/001-daily-todo/spec.md",
+  planPath: "specs/001-daily-todo/plan.md",
+  tasksPath: "specs/001-daily-todo/tasks.md"
+}
+```
+
+**LLM 执行流程**：
+
+1. **收到 Prompt 指令**：
+   ```
+   Given files: spec.md, plan.md, tasks.md
+
+   Do this:
+   1. Run: check-prerequisites.sh --json --require-tasks --include-tasks
+   2. Read: all files + constitution.md
+   3. Perform 6 types of checks:
+      A. Duplication detection
+      B. Ambiguity detection
+      C. Underspecification
+      D. Constitution alignment
+      E. Coverage gaps
+      F. Inconsistency
+   4. Generate analysis report
+   ```
+
+2. **读取所有文档**：
+   ```bash
+   LLM 调用: spec-context tool
+   LLM 调用: plan-context tool
+   LLM 调用: tasks-context tool
+   LLM 读取: .specify/memory/constitution.md
+   ```
+
+3. **执行 6 类检测**：
+   ```
+   A. 重复检测：
+      - 发现：FR-003 和 FR-007 重复描述"标记完成"功能
+
+   B. 歧义检测：
+      - 发现：plan.md 中"快速响应"缺少量化指标
+
+   C. 不完整检测：
+      - 发现：spec.md 缺少错误处理需求
+
+   D. 宪法合规：
+      - 发现：plan.md 违反 Library-First 原则（自定义状态管理应使用 Zustand）
+
+   E. 覆盖率缺口：
+      - 发现：15 个需求中，有 2 个没有对应任务（FR-010, FR-012）
+
+   F. 不一致：
+      - 发现：spec.md 中 Todo 有 priority 字段，但 plan.md 数据模型缺少
+   ```
+
+4. **生成分析报告**：
+   ```markdown
+   # Specification Analysis Report
+   Generated: 2025-10-04
+
+   ## Summary
+   - Total Issues: 6
+   - Critical: 1
+   - High: 2
+   - Medium: 3
+   - Coverage: 87% (13/15 requirements have tasks)
+
+   ## Issues
+   | ID | Severity | Type | Location | Description |
+   |----|----------|------|----------|-------------|
+   | A1 | CRITICAL | Constitution | plan.md:L45 | Violates Library-First: should use Zustand |
+   | A2 | HIGH | Ambiguity | plan.md:L120 | "fast" lacks criteria → add "<500ms" |
+   | A3 | HIGH | Coverage Gap | tasks.md | FR-010, FR-012 missing tasks |
+   | A4 | MEDIUM | Duplication | spec.md:L80,L150 | FR-003 = FR-007 |
+   | A5 | MEDIUM | Inconsistency | plan.md:L200 | Todo.priority missing in data model |
+   | A6 | MEDIUM | Underspec | spec.md | Error handling undefined |
+
+   ## Suggested Fixes
+   1. [A1] Use Zustand for state management (replace custom store)
+   2. [A2] Add measurable criteria: "UI response < 500ms (p95)"
+   3. [A3] Add tasks: T4.7 (FR-010), T4.8 (FR-012)
+   4. [A4] Merge FR-003 and FR-007 into single requirement
+   5. [A5] Add priority field to Todo interface in plan.md
+   6. [A6] Add error handling requirements (network, validation)
+   ```
+
+5. **询问用户是否修复**：
+   ```
+   LLM: 发现 6 个问题（1 个 CRITICAL, 2 个 HIGH）。是否修复？
+
+   User: yes  ✅
+
+   LLM: 正在应用修复...
+        [更新 plan.md]
+        [更新 spec.md]
+        [更新 tasks.md]
+
+   LLM: ✅ 已修复所有问题
+        - Updated plan.md (使用 Zustand, 添加 priority 字段)
+        - Updated spec.md (合并重复需求, 添加错误处理)
+        - Updated tasks.md (添加 T4.7, T4.8)
+   ```
+
+**完成标志**：
+- ✅ 生成分析报告
+- ✅ 包含 6 类问题检测
+- ✅ 提供修复建议
+- ✅ （可选）应用修复
+
+---
+
+### 4.8 Stage 6: 执行实施（可选）
+
+**目标**：按 TDD 流程执行任务
+
+**执行**：
+```
+使用 implement prompt
+Arguments: { tasksPath: "specs/001-daily-todo/tasks.md" }
+```
+
+**LLM 执行流程**：
+
+1. **收到 Prompt 指令**：
+   ```
+   Given tasks: "specs/001-daily-todo/tasks.md"
+
+   Do this:
+   1. Read tasks.md
+   2. For each task in order:
+      a. Red: Write failing test
+      b. Green: Implement minimum code to pass
+      c. Refactor: Clean up while keeping tests green
+      d. Commit: Clear message linking to task ID
+   3. Track progress (update tasks.md checkboxes)
+   ```
+
+2. **读取任务列表**：
+   ```bash
+   LLM 调用: tasks-context tool { tasksPath: "specs/001-daily-todo/tasks.md" }
+
+   返回: 28 个任务，按阶段分组
+   ```
+
+3. **TDD 实施示例（T3.1: Todo 数据模型）**：
+   ```typescript
+   // Red: 写失败测试
+   // tests/models/Todo.test.ts
+   describe('Todo', () => {
+     it('should create todo with required fields', () => {
+       const todo = createTodo({ title: 'Test' });
+       expect(todo).toHaveProperty('id');
+       expect(todo).toHaveProperty('createdAt');
+     });
+   });
+
+   // 运行: npm test → ❌ FAIL (createTodo 未定义)
+
+   // Green: 实现最小代码
+   // src/models/Todo.ts
+   export function createTodo(data: { title: string }) {
+     return {
+       id: crypto.randomUUID(),
+       title: data.title,
+       completed: false,
+       createdAt: new Date(),
+       updatedAt: new Date()
+     };
+   }
+
+   // 运行: npm test → ✅ PASS
+
+   // Refactor: 清理代码
+   // (添加类型、优化结构)
+
+   // Commit
+   git add .
+   git commit -m "feat(todo): implement Todo data model (T3.1)"
+   ```
+
+4. **进度跟踪**：
+   ```bash
+   # 每完成一个任务，更新 tasks.md
+   - [x] **T3.1**: 实现 Todo 数据模型 ✅
+   - [ ] **T3.2**: 实现 localStorage adapter
+   ```
+
+**完成标志**：
+- ✅ 所有任务执行完成
+- ✅ 测试全部通过
+- ✅ 代码已提交
+- ✅ tasks.md 已全部勾选
+
+---
+
+### 4.9 完整工作流总结
+
+```
+阶段 0: 初始化
+  → init tool
+  → .specify/ 结构创建完成 ✅
+
+阶段 1: 创建规格
+  → /specify "每日 todo 工具"
+  → spec.md 生成（10k 字符, 15 需求）✅
+
+阶段 2: 澄清需求（可选）
+  → /clarify
+  → 5 个问题，spec.md 更新 ✅
+
+阶段 3: 生成计划
+  → /plan
+  → plan.md 生成（技术栈，数据模型，5 阶段）✅
+
+阶段 4: 生成任务
+  → /tasks
+  → tasks.md 生成（28 任务，5 阶段分组）✅
+
+阶段 5: 质量分析（可选）
+  → /analyze
+  → 分析报告 + 修复建议 ✅
+
+阶段 6: 执行实施（可选）
+  → /implement
+  → TDD 实施，代码完成 ✅
+```
+
+**关键优势**：
+- 🚀 **快速**：从需求到任务清单只需 5 分钟
+- 🎯 **准确**：LLM 深度理解需求，生成高质量文档
+- 🔄 **迭代**：可随时回到任何阶段重新生成
+- ✅ **可验证**：每个阶段都有明确的验证标准
+
+---
+
+## 5. 内置审批机制
+
+### 5.1 `/clarify` - 交互式问答审批
 
 **原理**：用户回答问题 = 批准内容
 
@@ -386,7 +1150,7 @@ Step 4: 完成报告
 - ✅ 用户回答 = 批准（实时更新 spec.md）
 - ✅ 流畅的用户体验（无需切换工具）
 
-### 4.2 `/analyze` - 质量报告审批
+### 5.2 `/analyze` - 质量报告审批
 
 **原理**：用户审核报告 + 决定是否修复 = 批准流程
 
@@ -446,9 +1210,9 @@ Step 5: 完成报告
 
 ---
 
-## 5. 为什么 Pure MCP 更好？
+## 6. 为什么 Pure MCP 更好？
 
-### 5.1 对比：规则引擎 vs Pure MCP
+### 6.1 对比：规则引擎 vs Pure MCP
 
 | 维度 | 规则引擎（旧） | Pure MCP + LLM（新） |
 |------|--------------|-------------------|
@@ -459,7 +1223,7 @@ Step 5: 完成报告
 | **扩展性** | ❌ 难（新增规则复杂） | ✅ 易（新增 Prompt 简单） |
 | **代码量** | ❌ 多（4,418 行） | ✅ 少（~1,500 行） |
 
-### 5.2 实际效果对比
+### 6.2 实际效果对比
 
 **测试用例**：`"我们要开发一款基于 Web 的 AI 项目管理应用..."`
 
@@ -471,7 +1235,7 @@ Step 5: 完成报告
 | Tasks 数量 | 12 | 52 |
 | **覆盖率** | **18%** | **100%** |
 
-### 5.3 架构优势
+### 6.3 架构优势
 
 ```
 规则引擎问题:
@@ -501,9 +1265,9 @@ Pure MCP 优势:
 
 ---
 
-## 6. 核心设计原则
+## 7. 核心设计原则
 
-### 6.1 Prompts 设计原则
+### 7.1 Prompts 设计原则
 
 1. **详细指令**：告诉 LLM 每一步做什么
 2. **质量标准**：明确输出要求（字符数、数量、格式）
@@ -530,7 +1294,7 @@ Quality Standards:
 `
 ```
 
-### 6.2 Tools 设计原则
+### 7.2 Tools 设计原则
 
 1. **单一职责**：每个 Tool 只做一件事
 2. **返回结构化数据**：JSON 格式，易于 LLM 理解
@@ -560,7 +1324,7 @@ export async function handleSpecContext(args) {
 }
 ```
 
-### 6.3 审批流程设计原则
+### 7.3 审批流程设计原则
 
 1. **对话优先**：所有交互在对话中完成
 2. **实时反馈**：每个回答立即更新文件
@@ -569,9 +1333,9 @@ export async function handleSpecContext(args) {
 
 ---
 
-## 7. 总结
+## 8. 总结
 
-### 7.1 核心思想
+### 8.1 核心思想
 
 **spec-kit-mcp = spec-kit prompts + MCP Protocol + LLM 能力**
 
@@ -585,7 +1349,7 @@ LLM 内置能力 (中文、推理、生成)
 高质量文档 (spec/plan/tasks)
 ```
 
-### 7.2 关键优势
+### 8.2 关键优势
 
 1. **Pure MCP 架构**：不调用 LLM API，只提供 Prompts + Tools
 2. **完美中文支持**：LLM 内置能力
@@ -593,7 +1357,7 @@ LLM 内置能力 (中文、推理、生成)
 4. **内置审批机制**：交互式问答 + 质量报告
 5. **无 Dashboard**：命令行优先，流畅体验
 
-### 7.3 工作流程
+### 8.3 工作流程
 
 ```
 用户 → MCP Prompt → LLM → MCP Tools → 文件系统
@@ -610,7 +1374,7 @@ LLM 内置能力 (中文、推理、生成)
 
 ---
 
-## 8. 参考
+## 9. 参考
 
 - **完整转换方案**：[conversion-plan.md](./conversion-plan.md)
 - **审批机制澄清**：[approval-clarification.md](./approval-clarification.md)
@@ -620,7 +1384,8 @@ LLM 内置能力 (中文、推理、生成)
 ---
 
 **创建日期**：2025-10-03
-**版本**：1.0.0
+**更新日期**：2025-10-06
+**版本**：1.1.0
 **状态**：完成
 
 *spec-kit-mcp - Pure MCP + LLM Architecture*
