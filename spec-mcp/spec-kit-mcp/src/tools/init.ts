@@ -16,7 +16,16 @@ const __dirname = dirname(__filename);
 
 export const initTool: Tool = {
   name: 'init',
-  description: 'Initialize .specify/ directory structure with scripts, templates, and configuration for spec-kit workflow',
+  description: `Initialize .specify/ directory structure with scripts, templates, and configuration for spec-kit workflow.
+
+⚠️ MUST be called ONCE before using any Prompts. Call from project root directory.
+
+Creates:
+- .specify/scripts/bash/ (4 scripts: create-new-feature.sh, setup-plan.sh, check-prerequisites.sh, common.sh)
+- .specify/templates/ (3 templates: spec-template.md, plan-template.md, tasks-template.md)
+- .specify/memory/ (1 constitution: constitution.md)
+
+Verification: Run 'ls -R .specify/' to confirm structure exists.`,
   inputSchema: {
     type: 'object',
     properties: {

@@ -10,7 +10,12 @@ import { ToolContext } from '../types.js';
 const prompt: Prompt = {
   name: 'clarify',
   title: 'Clarify Spec Ambiguities',
-  description: 'Identify underspecified areas in the current feature spec by asking up to 5 highly targeted clarification questions and encoding answers back into the spec',
+  description: `[STEP 2 - OPTIONAL BUT RECOMMENDED] Identify underspecified areas in the current feature spec by asking up to 5 highly targeted clarification questions and encoding answers back into the spec.
+
+Prerequisites: Call specify prompt first to create spec.md.
+After completion: Call spec-context tool to verify Clarifications section exists.
+
+This interactive Q&A stage reduces downstream rework risk. Skip only for exploratory spikes.`,
   arguments: [
     {
       name: 'arguments',

@@ -8,7 +8,16 @@ import { resolve } from 'path';
 
 export const planContextTool: Tool = {
   name: 'plan-context',
-  description: 'Read and parse plan.md to get implementation plan context',
+  description: `Read and parse plan.md to get implementation plan context. Use this tool to verify plan.md quality after calling plan prompt.
+
+Quality standards to check:
+- Tech stack: 7 technical decisions with rationale
+- Data model: TypeScript interfaces/types definition
+- Phases: 5 implementation phases (Phase 0-4)
+- Constitution alignment: References constitution principles
+- Architecture: Clear system architecture
+
+Returns: Full content, parsed sections (overview, architecture, data model, phases, etc.).`,
   inputSchema: {
     type: 'object',
     properties: {

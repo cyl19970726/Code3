@@ -9,7 +9,11 @@ import { ToolContext } from '../types.js';
 const prompt: Prompt = {
   name: 'constitution',
   title: 'Manage Constitution',
-  description: 'Create or update the project constitution from interactive or provided principle inputs, ensuring all dependent templates stay in sync',
+  description: `[MAINTENANCE] Create or update the project constitution from interactive or provided principle inputs, ensuring all dependent templates stay in sync.
+
+This is NOT part of the regular workflow. Only call when user explicitly requests to update design principles or governance rules.
+
+Updates: .specify/memory/constitution.md and propagates changes to all templates.`,
   arguments: [
     {
       name: 'arguments',

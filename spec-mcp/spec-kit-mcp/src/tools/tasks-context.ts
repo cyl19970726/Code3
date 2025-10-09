@@ -8,7 +8,16 @@ import { resolve } from 'path';
 
 export const tasksContextTool: Tool = {
   name: 'tasks-context',
-  description: 'Read and parse tasks.md to get tasks context',
+  description: `Read and parse tasks.md to get tasks context. Use this tool to verify tasks.md quality after calling tasks prompt or track implementation progress during implement prompt.
+
+Quality standards to check:
+- Total tasks: 20+ tasks minimum
+- Phases: 5 phases (Setup, Tests, Core, Integration, Polish)
+- Parallel markers: [P] for tasks that can run concurrently
+- Dependencies: Clear dependency order
+- Acceptance criteria: Each task has testable outcomes
+
+Returns: Full content, parsed tasks with IDs/descriptions/completion status, grouped by phase.`,
   inputSchema: {
     type: 'object',
     properties: {

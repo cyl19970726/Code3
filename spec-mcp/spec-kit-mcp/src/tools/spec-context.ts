@@ -8,7 +8,16 @@ import { resolve } from 'path';
 
 export const specContextTool: Tool = {
   name: 'spec-context',
-  description: 'Read and parse spec.md to get specification context',
+  description: `Read and parse spec.md to get specification context. Use this tool to verify spec.md quality after calling specify or clarify prompts.
+
+Quality standards to check:
+- Character count: 8,000-12,000 chars
+- Requirements: 12-20 functional requirements
+- Entities: 4-6 data entities
+- User stories: GIVEN-WHEN-THEN format
+- Clarifications section: Exists after clarify prompt
+
+Returns: Full content, parsed sections (overview, clarifications, requirements, etc.), and metadata.`,
   inputSchema: {
     type: 'object',
     properties: {
