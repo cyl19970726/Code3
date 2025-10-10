@@ -8,7 +8,7 @@ import { ToolContext } from '../types.js';
 
 const prompt: Prompt = {
   name: 'plan',
-  title: 'Create Implementation Plan',
+  title: 'plan',
   description: `[STEP 3] Execute the implementation planning workflow using the plan template to generate plan.md with tech stack, data model, and execution phases.
 
 Prerequisites: spec.md must exist (from specify prompt). Recommended to run clarify prompt first.

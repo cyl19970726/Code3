@@ -8,7 +8,7 @@ import { ToolContext } from '../types.js';
 
 const prompt: Prompt = {
   name: 'implement',
-  title: 'Execute Implementation',
+  title: 'implement',
   description: `[STEP 6] Execute the implementation plan by processing and executing all tasks defined in tasks.md using TDD approach (Red-Green-Refactor-Commit).
 
 Prerequisites: tasks.md must exist. Recommended to run analyze prompt first to detect quality issues.

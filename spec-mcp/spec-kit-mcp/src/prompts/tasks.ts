@@ -8,7 +8,7 @@ import { ToolContext } from '../types.js';
 
 const prompt: Prompt = {
   name: 'tasks',
-  title: 'Generate Tasks Document',
+  title: 'tasks',
   description: `[STEP 4] Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
 
 Prerequisites: plan.md must exist (from plan prompt).

@@ -8,7 +8,7 @@ import { ToolContext } from '../types.js';
 
 const prompt: Prompt = {
   name: 'specify',
-  title: 'Create Feature Specification',
+  title: 'specify',
   description: `[STEP 1] Create or update the feature specification from a natural language feature description.
 
 Prerequisites: Call init tool first to create .specify/ structure.

@@ -9,7 +9,7 @@ import { ToolContext } from '../types.js';
 
 const prompt: Prompt = {
   name: 'analyze',
-  title: 'Quality Analysis',
+  title: 'analyze',
   description: `[STEP 5 - OPTIONAL BUT RECOMMENDED] Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation.
 
 Prerequisites: All three artifacts (spec.md, plan.md, tasks.md) must exist.
