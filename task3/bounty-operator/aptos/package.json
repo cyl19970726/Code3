@@ -1,0 +1,18 @@
+{
+  "name": "@code3-team/bounty-operator-aptos",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^1.39.0",
+    "@code3-team/bounty-operator": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

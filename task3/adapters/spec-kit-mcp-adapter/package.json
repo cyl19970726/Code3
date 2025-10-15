@@ -1,0 +1,40 @@
+{
+  "name": "@code3-team/spec-kit-mcp-adapter",
+  "version": "1.0.0",
+  "description": "spec-kit workflow adapter for Code3 bounty system",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "spec-kit-mcp-adapter": "./dist/src/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "vitest run tests/e2e-*.test.ts",
+    "test:e2e:watch": "vitest tests/e2e-*.test.ts"
+  },
+  "dependencies": {
+    "@aptos-labs/ts-sdk": "^1.39.0",
+    "@code3-team/bounty-operator": "workspace:*",
+    "@code3-team/bounty-operator-aptos": "workspace:*",
+    "@code3-team/data-layers-github": "workspace:*",
+    "@code3-team/data-operator": "workspace:*",
+    "@code3-team/orchestration": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@octokit/rest": "^21.0.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.10",
+    "@vitest/ui": "^3.2.4",
+    "dotenv": "^17.2.3",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  }
+}
