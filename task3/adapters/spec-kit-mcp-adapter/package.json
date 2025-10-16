@@ -23,11 +23,13 @@
     "@aptos-labs/ts-sdk": "^1.39.0",
     "@code3-team/bounty-operator": "workspace:*",
     "@code3-team/bounty-operator-aptos": "workspace:*",
+    "@code3-team/bounty-operator-ethereum": "workspace:*",
     "@code3-team/data-layers-github": "workspace:*",
     "@code3-team/data-operator": "workspace:*",
     "@code3-team/orchestration": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@octokit/rest": "^21.0.2",
+    "ethers": "^6.15.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

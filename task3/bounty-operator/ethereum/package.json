@@ -1,0 +1,40 @@
+{
+  "name": "@code3-team/bounty-operator-ethereum",
+  "version": "1.0.0",
+  "description": "Ethereum implementation of BountyOperator interface",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run --exclude src/e2e-ethereum.test.ts",
+    "test:watch": "vitest --exclude src/e2e-ethereum.test.ts",
+    "test:e2e": "vitest run src/e2e-ethereum.test.ts",
+    "prepublishOnly": "pnpm run clean && pnpm run build"
+  },
+  "dependencies": {
+    "@code3-team/bounty-operator": "workspace:*",
+    "dotenv": "^16.4.1",
+    "ethers": "^6.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "ethereum",
+    "bounty",
+    "code3",
+    "blockchain"
+  ],
+  "author": "Code3 Team",
+  "license": "MIT"
+}
