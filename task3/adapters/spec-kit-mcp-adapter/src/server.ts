@@ -30,8 +30,10 @@ import { claimBounty, claimBountyTool } from './tools/claim-bounty.js';
 const config = {
   githubToken: process.env.GITHUB_TOKEN,
   aptosPrivateKey: process.env.APTOS_PRIVATE_KEY,
+  aptosModuleAddress: process.env.APTOS_MODULE_ADDRESS,
   ethereumPrivateKey: process.env.ETHEREUM_PRIVATE_KEY,
   ethereumRpcUrl: process.env.ETHEREUM_RPC_URL,
+  ethereumContractAddress: process.env.ETHEREUM_CONTRACT_ADDRESS,
   localSpecsDir: process.env.LOCAL_SPECS_DIR || './specs',
   repo: process.env.GITHUB_REPO || ''
 };
@@ -137,8 +139,10 @@ async function main() {
   console.error(`  - Local Specs Dir: ${config.localSpecsDir}`);
   console.error(`  - GitHub Token: ${config.githubToken ? '***' : 'NOT SET'}`);
   console.error(`  - Aptos Private Key: ${config.aptosPrivateKey ? '***' : 'NOT SET'}`);
+  console.error(`  - Aptos Module Address: ${config.aptosModuleAddress || 'NOT SET'}`);
   console.error(`  - Ethereum Private Key: ${config.ethereumPrivateKey ? '***' : 'NOT SET'}`);
   console.error(`  - Ethereum RPC URL: ${config.ethereumRpcUrl || 'NOT SET'}`);
+  console.error(`  - Ethereum Contract Address: ${config.ethereumContractAddress || 'NOT SET'}`);
 }
 
 main().catch((error) => {

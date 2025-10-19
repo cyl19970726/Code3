@@ -27,7 +27,7 @@ const PublishBountySchema = z.object({
   amount: z.string().describe('Bounty amount (e.g., "100000000" for 1 APT, or "10000000000000000" for 0.01 ETH)'),
   asset: z.string().describe('Asset symbol (e.g., "APT", "ETH")'),
   chain: z.enum(['aptos', 'ethereum']).default('aptos').describe('Target blockchain'),
-  moduleAddress: z.string().describe('Contract address (Aptos: module address, Ethereum: contract address)')
+  moduleAddress: z.string().optional().describe('Contract address (optional if ETHEREUM_CONTRACT_ADDRESS or APTOS_MODULE_ADDRESS env var is set)')
 });
 
 export async function publishBounty(
@@ -37,6 +37,8 @@ export async function publishBounty(
     aptosPrivateKey?: string;
     ethereumPrivateKey?: string;
     ethereumRpcUrl?: string;
+    ethereumContractAddress?: string;
+    aptosModuleAddress?: string;
     localSpecsDir: string;
   }
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
@@ -63,10 +65,16 @@ export async function publishBounty(
         throw new Error('ETHEREUM_RPC_URL is required for Ethereum chain');
       }
 
+      // Use contract address from env var if available, otherwise from args
+      const contractAddress = config.ethereumContractAddress || args.moduleAddress;
+      if (!contractAddress) {
+        throw new Error('Ethereum contract address is required (either ETHEREUM_CONTRACT_ADDRESS env var or moduleAddress parameter)');
+      }
+
       bountyOperator = new EthereumBountyOperator({
         rpcUrl: config.ethereumRpcUrl,
         privateKey: config.ethereumPrivateKey,
-        contractAddress: args.moduleAddress
+        contractAddress
       });
       network = 'sepolia'; // Default to Sepolia testnet
     } else {
@@ -75,16 +83,28 @@ export async function publishBounty(
         throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
       }
 
+      // Use module address from env var if available, otherwise from args
+      const moduleAddress = config.aptosModuleAddress || args.moduleAddress;
+      if (!moduleAddress) {
+        throw new Error('Aptos module address is required (either APTOS_MODULE_ADDRESS env var or moduleAddress parameter)');
+      }
+
       bountyOperator = new AptosBountyOperator({
         privateKey: config.aptosPrivateKey,
         network: Network.TESTNET,
-        moduleAddress: args.moduleAddress
+        moduleAddress
       });
       network = 'testnet';
     }
 
     // 4. Create Task3Operator instance and call publishFlow
     const task3Operator = new ConcreteTask3Operator();
+
+    // Get the actual contract/module address being used
+    const actualAddress = args.chain === 'ethereum'
+      ? (config.ethereumContractAddress || args.moduleAddress)
+      : (config.aptosModuleAddress || args.moduleAddress);
+
     const result = await task3Operator.publishFlow({
       dataOperator,
       bountyOperator,
@@ -97,7 +117,7 @@ export async function publishBounty(
           name: args.chain,
           network,
           bountyId: '', // Will be set after creation
-          contractAddress: args.moduleAddress
+          contractAddress: actualAddress
         },
         workflow: {
           name: 'spec-kit',
@@ -181,9 +201,9 @@ Supported chains:
       },
       moduleAddress: {
         type: 'string',
-        description: 'Contract address (Aptos: module address like 0x123, Ethereum: contract address like 0xc18C3F54778D2B1527c1081Ed15F030170C42B82)'
+        description: 'Contract address (optional if ETHEREUM_CONTRACT_ADDRESS or APTOS_MODULE_ADDRESS env var is set)'
       }
     },
-    required: ['specPath', 'repo', 'amount', 'asset', 'moduleAddress']
+    required: ['specPath', 'repo', 'amount', 'asset']
   }
 };
