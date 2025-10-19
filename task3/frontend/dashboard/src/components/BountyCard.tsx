@@ -54,13 +54,13 @@ export function BountyCard({ bounty }: BountyCardProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Bounty</span>
             <span className="text-lg font-semibold">
-              {formatAmount(bounty.amount)} {bounty.asset}
+              {formatAmount(bounty.amount, bounty.asset)} {bounty.asset}
             </span>
           </div>
 
-          {/* Sponsor */}
+          {/* Requester */}
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Sponsor</span>
+            <span className="text-sm text-muted-foreground">Requester</span>
             <code className="text-xs bg-muted px-2 py-1 rounded">
               {truncateAddress(bounty.sponsor)}
             </code>

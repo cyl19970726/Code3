@@ -333,17 +333,34 @@ export class AptosBountyOperator implements BountyOperator {
   }
 
   /**
-   * Parse Move status u8 to TypeScript BountyStatus enum
+   * Parse Aptos on-chain status to TypeScript BountyStatus enum
+   *
+   * Mapping (Aptos Move contract → TypeScript enum):
+   * - 0 (STATUS_OPEN) → Open
+   * - 1 (STATUS_ACCEPTED) → Accepted
+   * - 2 (STATUS_SUBMITTED) → Submitted
+   * - 3 (STATUS_CONFIRMED) → Confirmed (enters 7-day cooling period)
+   * - 4 (STATUS_CLAIMED) → Claimed
+   * - 5 (STATUS_CANCELLED) → Cancelled
+   *
+   * Note: STATUS_CONFIRMED (3) represents the cooling down period state
    */
   private parseStatus(statusCode: number): BountyStatus {
     switch (statusCode) {
-      case 0: return BountyStatus.Open;
-      case 1: return BountyStatus.Accepted;
-      case 2: return BountyStatus.Submitted;
-      case 3: return BountyStatus.Confirmed;
-      case 4: return BountyStatus.Claimed;
-      case 5: return BountyStatus.Cancelled;
-      default: return BountyStatus.Open;
+      case 0: // Open
+        return BountyStatus.Open;
+      case 1: // Accepted
+        return BountyStatus.Accepted;
+      case 2: // Submitted
+        return BountyStatus.Submitted;
+      case 3: // Confirmed (cooling down period)
+        return BountyStatus.Confirmed;
+      case 4: // Claimed
+        return BountyStatus.Claimed;
+      case 5: // Cancelled
+        return BountyStatus.Cancelled;
+      default:
+        return BountyStatus.Open;
     }
   }
 }

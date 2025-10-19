@@ -39,7 +39,7 @@ PRIVATE_KEY=0x_your_requester_private_key_here
 WORKER_PRIVATE_KEY=0x_your_worker_private_key_here
 
 # BountyManager 合约地址（Sepolia 已部署）
-CONTRACT_ADDRESS=0xc18C3F54778D2B1527c1081Ed15F030170C42B82
+CONTRACT_ADDRESS=0x28FE83352f2451c54d9050761DF1d7F8945a8fc4
 ```
 
 **如何从 Metamask 导出私钥**：
@@ -154,7 +154,7 @@ node test-claim.ts
 
 ```
 ✅ E2E test environment ready
-- Contract: 0xc18C3F54778D2B1527c1081Ed15F030170C42B82
+- Contract: 0x28FE83352f2451c54d9050761DF1d7F8945a8fc4
 - Requester: 0xFe1bA596129392420f21b2Db260522ea4a46168B
 - Worker: 0x9876543210987654321098765432109876543210
 - Task ID: test-task-1697000000000

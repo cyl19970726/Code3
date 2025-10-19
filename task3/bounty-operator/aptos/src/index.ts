@@ -1,1 +1,1 @@
-export { AptosBountyOperator, type AptosBountyOperatorConfig } from './aptos-bounty-operator';
+export { AptosBountyOperator, type AptosBountyOperatorConfig } from './aptos-bounty-operator.js';

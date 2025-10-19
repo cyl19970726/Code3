@@ -1,15 +1,16 @@
 /**
- * MCP Tool: accept-bounty (接单)
+ * MCP Tool: confirm-bounty (确认提交)
  *
  * Functionality:
- * 1. Download spec.md from GitHub Issue to local
- * 2. Accept bounty on-chain (Worker accepts the task)
- * 3. Return local path and bountyId
+ * 1. Verify PR submission exists
+ * 2. Confirm bounty on-chain (User confirms Worker's submission)
+ * 3. Enter 7-day cooling period
+ * 4. Return txHash and coolingUntil timestamp
  *
  * State validation:
- * - Bounty status must be Open
+ * - Bounty status must be Submitted
  *
- * Role: Worker (accepts and starts working on the task)
+ * Role: User (confirms Worker's submission)
  */
 
 import { z } from 'zod';
@@ -19,13 +20,13 @@ import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
 import { ConcreteTask3Operator } from '@code3-team/orchestration';
 import { Network } from '@aptos-labs/ts-sdk';
 
-const AcceptBountySchema = z.object({
+const ConfirmBountySchema = z.object({
   issueUrl: z.string().describe('GitHub Issue URL'),
   moduleAddress: z.string().describe('Module address for bounty contract')
 });
 
-export async function acceptBounty(
-  args: z.infer<typeof AcceptBountySchema>,
+export async function confirmBounty(
+  args: z.infer<typeof ConfirmBountySchema>,
   config: {
     githubToken: string;
     aptosPrivateKey: string;
@@ -47,16 +48,17 @@ export async function acceptBounty(
       moduleAddress: args.moduleAddress
     });
 
-    // 2. Create Task3Operator instance and call acceptFlow
+    // 2. Create Task3Operator instance and call confirmFlow
     const task3Operator = new ConcreteTask3Operator();
-    const result = await task3Operator.acceptFlow({
+    const result = await task3Operator.confirmFlow({
       dataOperator,
       bountyOperator,
       taskUrl: args.issueUrl
     });
 
     // 3. Return result
-    const message = `✅ Bounty accepted successfully!\n\n- Bounty ID: ${result.bountyId}\n- Local Path: ${result.localPath}\n- Tx Hash: ${result.txHash}\n\nYou can now start working on the spec.`;
+    const coolingEndDate = new Date(result.coolingUntil * 1000).toISOString();
+    const message = `✅ Bounty confirmed successfully!\n\n- Tx Hash: ${result.txHash}\n- Confirmed At: ${new Date(result.confirmedAt * 1000).toISOString()}\n- Cooling Period Ends: ${coolingEndDate}\n\nThe worker can claim the bounty after the cooling period ends.`;
 
     return {
       content: [{ type: 'text', text: message }]
@@ -66,31 +68,33 @@ export async function acceptBounty(
       content: [
         {
           type: 'text',
-          text: `❌ Failed to accept bounty: ${error.message}\n\nStack: ${error.stack}`
+          text: `❌ Failed to confirm bounty: ${error.message}\n\nStack: ${error.stack}`
         }
       ]
     };
   }
 }
 
-export const acceptBountyTool: Tool = {
-  name: 'accept-bounty',
-  description: `Accept a spec-kit bounty from GitHub Issue (Worker role).
+export const confirmBountyTool: Tool = {
+  name: 'confirm-bounty',
+  description: `Confirm a submitted PR for a spec-kit bounty (User role).
 
 This tool:
-1. Downloads spec.md from Issue to local directory
-2. Accepts the bounty on-chain (Worker accepts the task)
-3. Returns local path and bounty ID
+1. Verifies PR submission exists
+2. Confirms bounty on-chain (transitions Submitted → Confirmed)
+3. Starts 7-day cooling period
+4. Returns tx hash and cooling period end time
 
-State validation: Bounty must be in Open status.
+State validation:
+- Bounty must be in Submitted status
 
-Role: Executed by Worker to accept and start working on the task`,
+Role: Executed by User to confirm Worker's submission`,
   inputSchema: {
     type: 'object',
     properties: {
       issueUrl: {
         type: 'string',
-        description: 'GitHub Issue URL (e.g., "https://github.com/owner/repo/issues/123")'
+        description: 'GitHub Issue URL'
       },
       moduleAddress: {
         type: 'string',

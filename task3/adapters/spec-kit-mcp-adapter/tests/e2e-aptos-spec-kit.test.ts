@@ -22,6 +22,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { publishBounty } from '../src/tools/publish-bounty.js';
 import { acceptBounty } from '../src/tools/accept-bounty.js';
 import { submitBounty } from '../src/tools/submit-bounty.js';
+import { confirmBounty } from '../src/tools/confirm-bounty.js';
 import { claimBounty } from '../src/tools/claim-bounty.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -182,7 +183,31 @@ describe.skip('E2E: Aptos + spec-kit Complete Flow', () => {
     console.log(`✅ Submitted work, created PR: ${testPrUrl}`);
   }, 30000);
 
-  it.skip('Step 4: should claim payout after cooling period (MANUAL TEST)', async () => {
+  it('Step 4: should confirm bounty successfully (User confirms Worker submission)', async () => {
+    // Given
+    if (!testIssueUrl) {
+      throw new Error('Test depends on Step 1: testIssueUrl not set');
+    }
+
+    const args = {
+      issueUrl: testIssueUrl,
+      moduleAddress: testModuleAddress
+    };
+
+    // When
+    const result = await confirmBounty(args, config);
+
+    // Then
+    console.log('Confirm result:', result.content[0].text);
+    expect(result.content[0].text).toContain('✅ Bounty confirmed');
+    expect(result.content[0].text).toContain('Tx Hash:');
+    expect(result.content[0].text).toContain('Confirmed At:');
+    expect(result.content[0].text).toContain('Cooling Period Ends:');
+
+    console.log('✅ Bounty confirmed, cooling period started');
+  }, 30000);
+
+  it.skip('Step 5: should claim payout after cooling period (MANUAL TEST)', async () => {
     // This test is skipped by default because:
     // 1. Requires 7-day cooling period
     // 2. Requires manual PR merge
@@ -366,13 +391,16 @@ export async function waitForCoolingPeriod(durationMs: number): Promise<void> {
  *    pnpm test:e2e -- -t "Step 3"
  *    ```
  *
- * 6. Manually merge the PR on GitHub
+ * 6. Run confirm test (User confirms Worker's submission):
+ *    ```bash
+ *    pnpm test:e2e -- -t "Step 4"
+ *    ```
  *
  * 7. Wait 7 days for cooling period
  *
  * 8. Run claim test:
  *    ```bash
- *    pnpm test:e2e -- -t "Step 4"
+ *    pnpm test:e2e -- -t "Step 5"
  *    ```
  *
  * 9. Cleanup:

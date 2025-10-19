@@ -101,7 +101,7 @@ export function BountyDetail({ bounty }: BountyDetailProps) {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold">
-                {formatAmount(bounty.amount)} {bounty.asset}
+                {formatAmount(bounty.amount, bounty.asset)} {bounty.asset}
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 Bounty Amount
@@ -160,7 +160,7 @@ export function BountyDetail({ bounty }: BountyDetailProps) {
           {/* Participants */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <h3 className="text-sm font-semibold mb-2">Sponsor</h3>
+              <h3 className="text-sm font-semibold mb-2">Requester</h3>
               <code className="text-xs bg-muted px-3 py-2 rounded block">
                 {truncateAddress(bounty.sponsor)}
               </code>

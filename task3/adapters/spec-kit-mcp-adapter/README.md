@@ -11,84 +11,77 @@ This adapter implements the **Bounty flow** for spec-kit workflow, enabling:
 - Claiming payouts after review
 
 **Separation of Concerns**:
-- This package: **Bounty lifecycle tools** (4 tools)
+- This package: **Bounty lifecycle tools** (5 tools)
 - [`spec-kit-mcp`](../../../workflows/spec-kit-mcp/): **Workflow tools** (7 tools: specify, analyze, plan, etc.)
 
 ---
 
-## Architecture
+## Installation & Configuration
 
-### Components
+### Option 1: Quick Start with npx (Recommended)
 
+Add to your Claude Code `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "spec-kit-adapter": {
+      "command": "npx",
+      "args": ["-y", "@code3-team/spec-kit-mcp-adapter"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GITHUB_REPO": "owner/repo",
+        "APTOS_PRIVATE_KEY": "0x_your_aptos_key_here",
+        "APTOS_MODULE_ADDRESS": "0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1",
+        "ETHEREUM_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com",
+        "ETHEREUM_PRIVATE_KEY": "0x_your_ethereum_key_here",
+        "ETHEREUM_CONTRACT_ADDRESS": "0x28FE83352f2451c54d9050761DF1d7F8945a8fc4",
+        "LOCAL_SPECS_DIR": "./specs"
+      }
+    }
+  }
+}
 ```
-spec-kit-mcp-adapter/
-├── src/
-│   ├── data-operator.ts      # SpecKitDataOperator (implements DataOperator interface)
-│   ├── tools/                # 4 Bounty flow tools
-│   │   ├── publish-bounty.ts # Publish bounty (spec.md → GitHub Issue → on-chain)
-│   │   ├── accept-bounty.ts  # Accept bounty (on-chain → download spec.md)
-│   │   ├── submit-bounty.ts  # Submit work (create PR → on-chain)
-│   │   └── claim-bounty.ts   # Claim payout (verify cooling period → claim)
-│   ├── server.ts             # MCP server (exposes 4 tools)
-│   └── index.ts              # Package exports
-├── tests/                    # Unit and E2E tests
-├── package.json
-├── tsconfig.json
-└── .env.example              # Environment variables template
-```
 
-### Design Principles
+**Verify Installation**:
+1. Restart Claude Code
+2. Check that spec-kit-mcp-adapter prompts appear in the Prompts list
+3. Check that spec-kit-mcp-adapter tools appear in the Tools list
 
-1. **Interface Implementation**: Implements `DataOperator` interface from `@code3-team/data-operator`
-2. **Dependency Injection**: Uses `ConcreteTask3Operator` for flow orchestration
-3. **Chain Agnostic**: Works with Aptos, Ethereum, and other supported chains
-4. **Data Layer Agnostic**: Uses `GitHubDataLayer` for GitHub operations
-
----
-
-## Installation
-
-### Prerequisites
-
-- Node.js >= 18
-- pnpm >= 8
-- GitHub Personal Access Token
-- Aptos private key (or Ethereum private key)
-
-### Setup
-
-1. **Install dependencies**:
-   ```bash
-   pnpm install
-   ```
-
-2. **Build the package**:
-   ```bash
-   pnpm run build
-   ```
-
-3. **Configure environment variables**:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your credentials
-   ```
-
----
-
-## Configuration
-
-Create a `.env` file with the following variables:
+### Option 2: Local Development
 
 ```bash
-# GitHub Configuration
-GITHUB_TOKEN=ghp_your_personal_access_token_here
-GITHUB_REPO=owner/repo
+# 1. Clone repository
+git clone https://github.com/code3-team/code3.git
+cd code3/task3/adapters/spec-kit-mcp-adapter
 
-# Aptos Configuration
-APTOS_PRIVATE_KEY=0x_your_aptos_private_key_here
+# 2. Install dependencies
+pnpm install
 
-# Local Configuration
-LOCAL_SPECS_DIR=./specs
+# 3. Build
+pnpm run build
+
+# 4. Link locally
+pnpm link --global
+
+# 5. Add to .mcp.json
+{
+  "mcpServers": {
+    "spec-kit-adapter": {
+      "command": "spec-kit-mcp-adapter",
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GITHUB_REPO": "owner/repo",
+        "APTOS_PRIVATE_KEY": "0x_your_aptos_key_here",
+        "APTOS_MODULE_ADDRESS": "0xafd0c08...",
+        "ETHEREUM_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com",
+        "ETHEREUM_PRIVATE_KEY": "0x_your_ethereum_key_here",
+        "ETHEREUM_CONTRACT_ADDRESS": "0x28FE83352...",
+        "LOCAL_SPECS_DIR": "./specs"
+      }
+    }
+  }
+}
 ```
 
 ### Environment Variables
@@ -98,38 +91,70 @@ LOCAL_SPECS_DIR=./specs
 | `GITHUB_TOKEN` | ✅ | GitHub Personal Access Token with `repo` scope |
 | `GITHUB_REPO` | ✅ | Repository in format `owner/repo` |
 | `APTOS_PRIVATE_KEY` | ✅ | Aptos account private key (0x-prefixed) |
+| `APTOS_MODULE_ADDRESS` | ✅ | Aptos contract module address |
+| `ETHEREUM_RPC_URL` | ✅ | Ethereum RPC endpoint (e.g., Sepolia testnet) |
+| `ETHEREUM_PRIVATE_KEY` | ✅ | Ethereum account private key (0x-prefixed) |
+| `ETHEREUM_CONTRACT_ADDRESS` | ✅ | Ethereum BountyManager contract address |
 | `LOCAL_SPECS_DIR` | ❌ | Local directory for spec.md files (default: `./specs`) |
 
 ---
 
-## Usage
+## Project Structure
 
-### Start MCP Server
+```
+spec-kit-mcp-adapter/
+├── src/
+│   ├── data-operator.ts      # SpecKitDataOperator (implements DataOperator interface)
+│   ├── tools/                # 5 Bounty flow tools
+│   │   ├── publish-bounty.ts # Publish bounty (spec.md → GitHub Issue → on-chain)
+│   │   ├── accept-bounty.ts  # Accept bounty (on-chain → download spec.md)
+│   │   ├── submit-bounty.ts  # Submit work (create PR → on-chain)
+│   │   ├── confirm-bounty.ts # Confirm work (requester confirms submission)
+│   │   └── claim-bounty.ts   # Claim payout (verify cooling period → claim)
+│   ├── server.ts             # MCP server (exposes 5 tools)
+│   └── index.ts              # Package exports
+├── tests/                    # Unit and E2E tests
+├── package.json
+├── tsconfig.json
+└── .env.example              # Environment variables template
+```
+
+---
+
+## Development
+
+### Build
 
 ```bash
-npx spec-kit-mcp-adapter
+pnpm run build
 ```
 
-Or via Claude Desktop:
+### Run Tests
 
-```json
-{
-  "mcpServers": {
-    "spec-kit-bounty": {
-      "command": "npx",
-      "args": ["spec-kit-mcp-adapter"],
-      "env": {
-        "GITHUB_TOKEN": "ghp_...",
-        "GITHUB_REPO": "owner/repo",
-        "APTOS_PRIVATE_KEY": "0x...",
-        "LOCAL_SPECS_DIR": "./specs"
-      }
-    }
-  }
-}
+```bash
+# Unit tests
+pnpm test
+
+# E2E tests (requires deployed contracts and test tokens)
+pnpm test:e2e
 ```
 
-### Available Tools
+### Watch Mode
+
+```bash
+pnpm run dev
+```
+
+### Start MCP Server Locally
+
+```bash
+# After build
+node dist/server.js
+```
+
+---
+
+## Available Tools
 
 #### 1. publish-bounty
 
@@ -208,70 +233,6 @@ Claim payout after cooling period.
   "moduleAddress": "0xabc123..."
 }
 ```
-
----
-
-## Development
-
-### Build
-
-```bash
-pnpm run build
-```
-
-### Run Tests
-
-```bash
-# Unit tests
-pnpm test
-
-# E2E tests
-pnpm test:e2e
-```
-
-### Watch Mode
-
-```bash
-pnpm run dev
-```
-
----
-
-## Architecture Details
-
-### SpecKitDataOperator
-
-Implements the `DataOperator` interface with 5 methods:
-
-1. **uploadTaskData()**: Upload spec.md to GitHub Issue with YAML frontmatter metadata
-2. **downloadTaskData()**: Download Issue content to local `specs/{id}/spec.md`
-3. **uploadSubmission()**: Create PR with "Closes #\<issue_number\>"
-4. **getTaskMetadata()**: Extract metadata from Issue body
-5. **updateTaskMetadata()**: Update Issue metadata (deep merge)
-
-### Flow Orchestration
-
-Uses `ConcreteTask3Operator` (from `@code3-team/orchestration`) for:
-- State validation
-- Idempotency checks
-- Cooling period enforcement
-- Transaction coordination
-
-### Supported Chains
-
-- ✅ Aptos (via `@code3-team/bounty-operator-aptos`)
-- 🔄 Ethereum (coming soon)
-- 🔄 Sui (coming soon)
-
----
-
-## Related Packages
-
-- [`@code3-team/data-operator`](../../data-operator/): DataOperator interface
-- [`@code3-team/bounty-operator`](../../bounty-operator/): BountyOperator interface
-- [`@code3-team/bounty-operator-aptos`](../../bounty-operator/aptos/): Aptos implementation
-- [`@code3-team/orchestration`](../../orchestration/): Flow orchestration
-- [`@code3-team/data-layers-github`](../../data-layers/github/): GitHub operations
 
 ---
 

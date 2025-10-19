@@ -128,7 +128,7 @@ export class EthereumBountyOperator implements BountyOperator {
 
     if (!event) {
       console.log(`   ❌ BountyCreated event not found!`);
-      console.log(`   Available events: ${parsedEvents.filter(e => e).map(e => e.name).join(', ')}`);
+      console.log(`   Available events: ${parsedEvents.filter((e: any) => e).map((e: any) => e.name).join(', ')}`);
       throw new Error('BountyCreated event not found in transaction receipt');
     }
 

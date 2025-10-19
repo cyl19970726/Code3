@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev 支持 ETH 和 ERC20 代币作为赏金资产
  *
  * 状态机：Open → Accepted → Submitted → Confirmed → Claimed
- * 冷却期：确认后 7 天才能领取
+ * 冷却期：确认后才能领取（测试环境设置为 0）
  */
 contract BountyManager is ReentrancyGuard, Ownable {
     // ========== 状态枚举 ==========
@@ -53,7 +53,8 @@ contract BountyManager is ReentrancyGuard, Ownable {
     mapping(address => uint256[]) public requesterBounties;
     mapping(address => uint256[]) public workerBounties;
 
-    uint256 public constant COOLING_PERIOD = 7 days;
+    // No cooling period for testing
+    uint256 public constant COOLING_PERIOD = 0;
 
     // ========== 事件 ==========
 

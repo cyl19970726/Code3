@@ -29,11 +29,19 @@ export function formatTimeAgo(timestamp: number): string {
 }
 
 /**
- * Format amount with decimals
- * Example: ("1000000", 6) -> "1.00"
+ * Format amount with decimals based on asset type
+ * Example: ("1000000", "USDC") -> "1.00"
+ * Example: ("10000000000000000", "ETH") -> "0.01"
  */
-export function formatAmount(amount: string, decimals: number = 6): string {
+export function formatAmount(amount: string, asset?: string): string {
   try {
+    // Determine decimals based on asset type
+    let decimals = 6; // Default for tokens like USDC, APT
+
+    if (asset === 'ETH' || asset?.toUpperCase() === 'ETH') {
+      decimals = 18; // Ethereum native token
+    }
+
     const num = BigInt(amount);
     const divisor = BigInt(10 ** decimals);
     const whole = num / divisor;
@@ -41,9 +49,14 @@ export function formatAmount(amount: string, decimals: number = 6): string {
 
     // Format remainder with leading zeros
     const remainderStr = remainder.toString().padStart(decimals, '0');
-    const trimmedRemainder = remainderStr.slice(0, 2); // Show 2 decimal places
 
-    return `${whole}.${trimmedRemainder}`;
+    // Trim trailing zeros, but keep at least 2 decimal places
+    let decimalPart = remainderStr;
+    while (decimalPart.length > 2 && decimalPart.endsWith('0')) {
+      decimalPart = decimalPart.slice(0, -1);
+    }
+
+    return `${whole}.${decimalPart}`;
   } catch {
     return amount;
   }

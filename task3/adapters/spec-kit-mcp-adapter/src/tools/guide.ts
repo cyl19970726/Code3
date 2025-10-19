@@ -39,14 +39,6 @@ graph TD
 3. **publish-bounty** - 发布 GitHub Issue + 锁定资金
 4. **confirm-bounty** - 确认完成 (在 merge PR 后调用)
 
-## Configuration
-
-\`\`\`bash
-export GITHUB_TOKEN="ghp_..."
-export APTOS_PRIVATE_KEY="0x..."
-export GITHUB_REPO="owner/repo"
-export LOCAL_SPECS_DIR="./specs"
-\`\`\`
 
 ## Example
 
@@ -118,15 +110,6 @@ graph TD
 5. **tasks** - 拆分任务清单
 6. **analyze** - 分析代码库
 7. **implement** - 实现功能
-
-## Configuration
-
-\`\`\`bash
-export GITHUB_TOKEN="ghp_..."
-export APTOS_PRIVATE_KEY="0x..."
-export GITHUB_REPO="owner/repo"
-export LOCAL_SPECS_DIR="./workspace"
-\`\`\`
 
 ## Example
 

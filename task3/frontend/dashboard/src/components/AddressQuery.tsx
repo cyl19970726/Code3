@@ -108,8 +108,8 @@ export function AddressQuery({ selectedChain, onQuery }: AddressQueryProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="any">Any (Sponsor or Worker)</SelectItem>
-              <SelectItem value="sponsor">Sponsor</SelectItem>
+              <SelectItem value="any">Any (Requester or Worker)</SelectItem>
+              <SelectItem value="sponsor">Requester</SelectItem>
               <SelectItem value="worker">Worker</SelectItem>
             </SelectContent>
           </Select>

@@ -35,7 +35,7 @@ import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
 const operator = new EthereumBountyOperator({
   rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
   privateKey: process.env.PRIVATE_KEY!,
-  contractAddress: '0xc18C3F54778D2B1527c1081Ed15F030170C42B82', // Sepolia
+  contractAddress: '0x28FE83352f2451c54d9050761DF1d7F8945a8fc4', // Sepolia
 
   // Optional gas settings
   gasLimit: 500000n,
@@ -165,11 +165,12 @@ const workerBounties = await operator.getBountiesByWorker({
 
 ### Sepolia Testnet (Live)
 
-- **Contract Address**: `0xc18C3F54778D2B1527c1081Ed15F030170C42B82`
+- **Contract Address**: `0x28FE83352f2451c54d9050761DF1d7F8945a8fc4`
 - **Chain ID**: 11155111
-- **Etherscan**: https://sepolia.etherscan.io/address/0xc18C3F54778D2B1527c1081Ed15F030170C42B82#code
-- **Deployed**: 2025-10-15T12:14:13.891Z
-- **Block**: 9417024
+- **Etherscan**: https://sepolia.etherscan.io/address/0x28FE83352f2451c54d9050761DF1d7F8945a8fc4#code
+- **Deployed**: 2025-10-19T09:30:37.393Z
+- **Block**: 9444330
+- **Cooling Period**: 0 seconds (for testing)
 
 ### Mainnet
 

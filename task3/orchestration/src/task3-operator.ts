@@ -15,7 +15,7 @@
  */
 
 import crypto from 'crypto';
-import { BountyStatus } from '../../bounty-operator/types.js';
+import { BountyStatus } from '@code3-team/bounty-operator';
 import type {
   PublishFlowParams,
   PublishFlowResult,
