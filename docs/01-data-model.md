@@ -48,7 +48,7 @@ export interface Bounty {
   taskHash: string;              // 任务内容哈希（用于幂等性检查）
 
   // ========== 参与者 ==========
-  sponsor: string;               // 赏金发起人地址
+  user: string;                  // 赏金发起人地址（requester）
   worker: string | null;         // 接单的 worker 地址（null 表示未接单）
 
   // ========== 赏金信息 ==========
@@ -73,7 +73,7 @@ export interface Bounty {
 | `bountyId` | string | ✅ | 链上唯一标识，由合约生成 |
 | `taskId` | string | ✅ | 任务 ID，格式依数据层而定 |
 | `taskHash` | string | ✅ | SHA256(taskData)，防止重复创建 |
-| `sponsor` | string | ✅ | 发起人的链上地址 |
+| `user` | string | ✅ | 发起人的链上地址（requester） |
 | `worker` | string \| null | ❌ | 接单后才有值 |
 | `amount` | string | ✅ | 使用字符串避免浮点数精度问题 |
 | `asset` | string | ✅ | 资产标识符（代币名称或地址） |
@@ -97,7 +97,7 @@ export enum BountyStatus {
   Submitted = 'Submitted', // worker 已提交工作成果
   Confirmed = 'Confirmed', // requester 已确认，进入冷静期
   Claimed = 'Claimed',     // worker 已领取赏金
-  Cancelled = 'Cancelled'  // sponsor 已取消（仅 Open 状态可取消）
+  Cancelled = 'Cancelled'  // user 已取消（仅 Open 状态可取消）
 }
 ```
 
@@ -110,7 +110,7 @@ export enum BountyStatus {
 | **Submitted** | worker 已提交工作成果 | confirmBounty | Confirmed |
 | **Confirmed** | requester 已确认，冷静期中 | claimPayout（冷静期后） | Claimed |
 | **Claimed** | worker 已领取赏金 | - | 终态 |
-| **Cancelled** | sponsor 已取消赏金 | - | 终态 |
+| **Cancelled** | user 已取消赏金 | - | 终态 |
 
 ---
 
@@ -128,7 +128,7 @@ stateDiagram-v2
     Cancelled --> [*]
 
     note right of Open
-        sponsor 可取消
+        user 可取消
     end note
 
     note right of Confirmed
@@ -162,9 +162,9 @@ stateDiagram-v2
    - 后置条件：claimedAt 被记录，资金转账给 worker
 
 5. **Open → Cancelled**
-   - 触发者：sponsor（取消赏金）
+   - 触发者：user（取消赏金）
    - 前置条件：赏金状态为 Open（仅未接单的赏金可取消）
-   - 后置条件：资金退还给 sponsor
+   - 后置条件：资金退还给 user
 
 ---
 
@@ -506,14 +506,14 @@ export interface ListBountiesResult {
 
 ---
 
-### 5.10 Get Bounties By Sponsor
+### 5.10 Get Bounties By User
 
 ```typescript
-export interface GetBountiesBySponsorParams {
-  sponsor: string;                 // Sponsor 地址
+export interface GetBountiesByUserParams {
+  user: string;                    // User 地址（requester）
 }
 
-export interface GetBountiesBySponsorResult {
+export interface GetBountiesByUserResult {
   bounties: Bounty[];              // Bounty 列表
 }
 ```

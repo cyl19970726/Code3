@@ -84,7 +84,7 @@
 - `bountyId` - Bounty 唯一标识
 - `taskId` - 任务标识（如 GitHub Issue URL）
 - `taskHash` - 任务内容哈希（用于幂等性）
-- `sponsor` - 发布者地址
+- `user` - 发布者地址（requester）
 - `worker` - 接单者地址
 - `amount` - 赏金金额
 - `asset` - 资产类型（APT, USDT, ETH）
@@ -109,7 +109,7 @@
 - `getBounty` - 按 ID 查询
 - `getBountyByTaskHash` - 按 taskHash 查询（幂等性）
 - `listBounties` - 列出所有 Bounty
-- `getBountiesBySponsor` - 按发布者查询
+- `getBountiesByUser` - 按发布者查询
 - `getBountiesByWorker` - 按接单者查询
 
 **实现**：
@@ -136,7 +136,7 @@ Cancelled
 - `Submitted` - worker 已提交工作成果
 - `Confirmed` - requester 已确认，进入冷静期
 - `Claimed` - worker 已领取赏金
-- `Cancelled` - sponsor 已取消
+- `Cancelled` - user 已取消
 
 **参考**：[01-data-model.md Section 2.2](./01-data-model.md#22-bountystatus-状态枚举)
 
@@ -163,7 +163,7 @@ Cancelled
 
 **前置条件**：
 - Bounty 状态为 `Submitted`
-- 调用者是 Sponsor
+- 调用者是 User（requester）
 
 **结果**：
 - 状态更新为 `Confirmed`
@@ -571,7 +571,7 @@ server.addTool({
 ## P
 
 ### Publish（发布）
-**定义**：Sponsor 发布新 Bounty 的操作。
+**定义**：User（requester）发布新 Bounty 的操作。
 
 **步骤**：
 1. 计算 `taskHash = SHA256(taskData)`
@@ -589,7 +589,7 @@ server.addTool({
 ## R
 
 ### Requester
-**定义**：发布 Bounty 的用户，也称为 Sponsor。
+**定义**：发布 Bounty 的用户。
 
 **权限**：
 - 发布 Bounty（`createBounty`）
@@ -634,8 +634,10 @@ server.addTool({
 
 ---
 
-### Sponsor
+### User (Bounty Creator)
 **定义**：见 [Requester](#requester)
+
+**注意**：在合约代码中，参数名仍保持 `sponsor` 以保持接口兼容性，但在文档和 UI 中统一使用 "User" 或 "Requester"。
 
 ---
 

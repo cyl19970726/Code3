@@ -295,7 +295,7 @@ npm run dev
 
 - **Bounty**：链上 Bounty 实体
 - **Task**：任务数据（存储在 GitHub Issue/IPFS）
-- **Requester/Sponsor**：发布 Bounty 的用户
+- **Requester/User**：发布 Bounty 的用户
 - **Worker**：接受并完成 Bounty 的用户
 - **Flow**：Orchestration 层的完整业务流程
 - **Operator**：实现特定接口的类（BountyOperator, DataOperator）

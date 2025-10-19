@@ -62,33 +62,236 @@ npm run build
 
 ### 2.3 配置环境变量
 
-创建 `.env` 文件：
+Code3 项目包含多个子模块，每个模块都有自己的 `.env` 文件。下面是完整的配置指南。
+
+#### 2.3.1 配置文件清单
+
+| 文件路径 | 用途 | 必需 |
+|---------|------|------|
+| `task3/frontend/dashboard/.env` | Dashboard 前端配置 | ✅ 是 |
+| `task3/adapters/spec-kit-mcp-adapter/.env` | MCP Adapter 配置（运行时） | ✅ 是 |
+| `task3/adapters/spec-kit-mcp-adapter/.env.test` | MCP Adapter 测试配置 | ⚠️ 测试时 |
+| `task3/bounty-operator/ethereum/.env.test` | Ethereum Operator 测试 | ⚠️ 测试时 |
+| `task3/bounty-operator/ethereum/contract/.env` | Ethereum 合约部署 | ⚠️ 部署时 |
+| `task3/bounty-operator/aptos/contract/.env.testnet` | Aptos 合约部署 | ⚠️ 部署时 |
+
+#### 2.3.2 Dashboard 配置（`task3/frontend/dashboard/.env`）
+
+**用途**：前端 Dashboard 连接区块链和 GitHub
+
 ```bash
-# .env
+# Aptos 配置
+NEXT_PUBLIC_APTOS_CONTRACT_ADDRESS=0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1
+NEXT_PUBLIC_APTOS_NETWORK=testnet
 
-# ========== GitHub 配置 ==========
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
-GITHUB_REPO=owner/repo
+# Ethereum 配置
+NEXT_PUBLIC_ETHEREUM_CONTRACT_ADDRESS=0x28FE83352f2451c54d9050761DF1d7F8945a8fc4
+NEXT_PUBLIC_ETHEREUM_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 
-# ========== Aptos 配置 ==========
-APTOS_PRIVATE_KEY=0x1234567890abcdef...
-APTOS_RPC_URL=https://fullnode.testnet.aptoslabs.com/v1
-APTOS_CONTRACT_ADDRESS=0xabcd...
-
-# ========== Ethereum 配置 ==========
-ETHEREUM_PRIVATE_KEY=0xabcdef1234567890...
-ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID
-ETHEREUM_CONTRACT_ADDRESS=0x1234...
-
-# ========== IPFS 配置（observer-mcp）==========
-IPFS_API_URL=https://ipfs.infura.io:5001
-IPFS_GATEWAY_URL=https://ipfs.io
+# GitHub 配置（后端 API 使用，不要加 NEXT_PUBLIC_ 前缀）
+GITHUB_TOKEN=ghp_your_github_personal_access_token_here
 ```
 
-**⚠️ 安全提示**：
-- 永远不要将 `.env` 文件提交到 Git
-- 生产环境使用系统钥匙串（Keychain/Vault）
-- 使用最小权限 Token
+**⚠️ 重要说明**：
+- `NEXT_PUBLIC_*` 前缀的变量会暴露到浏览器端，不要放敏感信息
+- `GITHUB_TOKEN` 只在服务端 API 路由中使用，不会暴露到浏览器
+
+**启动 Dashboard**：
+```bash
+cd task3/frontend/dashboard
+npm install
+npm run dev
+# 访问 http://localhost:3000
+```
+
+#### 2.3.3 MCP Adapter 配置（`task3/adapters/spec-kit-mcp-adapter/.env`）
+
+**用途**：MCP 服务器运行时配置（用于 Claude Desktop）
+
+```bash
+# GitHub 配置
+GITHUB_TOKEN=ghp_your_github_personal_access_token_here
+GITHUB_REPO=owner/repo-name
+
+# Aptos 配置（User/Requester 钱包）
+APTOS_PRIVATE_KEY=0x_your_aptos_private_key_here
+APTOS_MODULE_ADDRESS=0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1
+
+# Ethereum 配置（User/Requester 钱包）
+ETHEREUM_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+ETHEREUM_PRIVATE_KEY=0x_your_ethereum_private_key_here
+ETHEREUM_CONTRACT_ADDRESS=0x28FE83352f2451c54d9050761DF1d7F8945a8fc4
+
+# 本地规格文件存储路径
+LOCAL_SPECS_DIR=./specs
+```
+
+**配置 Claude Desktop MCP 服务器**：
+
+编辑 `~/.claude/claude_desktop_config.json`（macOS）或 `%APPDATA%\Claude\claude_desktop_config.json`（Windows）：
+
+```json
+{
+  "mcpServers": {
+    "spec-kit-mcp-adapter": {
+      "command": "node",
+      "args": ["/Users/your-username/code3/task3/adapters/spec-kit-mcp-adapter/dist/server.js"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GITHUB_REPO": "owner/repo",
+        "APTOS_PRIVATE_KEY": "0x_your_key",
+        "APTOS_MODULE_ADDRESS": "0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1",
+        "ETHEREUM_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com",
+        "ETHEREUM_PRIVATE_KEY": "0x_your_key",
+        "ETHEREUM_CONTRACT_ADDRESS": "0x28FE83352f2451c54d9050761DF1d7F8945a8fc4",
+        "LOCAL_SPECS_DIR": "./specs"
+      }
+    }
+  }
+}
+```
+
+重启 Claude Desktop 后，在对话中可以使用：
+- `publish-bounty` - 发布 Bounty
+- `accept-bounty` - 接受 Bounty
+- `submit-bounty` - 提交工作
+- `confirm-bounty` - 确认工作
+- `claim-bounty` - 领取赏金
+
+#### 2.3.4 MCP Adapter 测试配置（`task3/adapters/spec-kit-mcp-adapter/.env.test`）
+
+**用途**：E2E 测试环境变量（User + Worker 两个钱包）
+
+```bash
+# GitHub 配置
+GITHUB_TOKEN=ghp_your_github_personal_access_token_here
+TEST_REPO=owner/test-repo
+
+# Aptos 配置（User 钱包）
+APTOS_PRIVATE_KEY=0x_user_aptos_private_key
+APTOS_MODULE_ADDRESS=0x39c3a18dce95618c8366072d8068ec31c68af0c5a0ffd50699bccea8dde16182
+
+# Ethereum 配置（User 钱包）
+ETHEREUM_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+ETHEREUM_PRIVATE_KEY=0x_user_ethereum_private_key
+ETHEREUM_WORKER_PRIVATE_KEY=0x_worker_ethereum_private_key
+ETHEREUM_CONTRACT_ADDRESS=0x28FE83352f2451c54d9050761DF1d7F8945a8fc4
+
+# 本地配置
+LOCAL_SPECS_DIR=./tests/fixtures/specs
+```
+
+**运行 E2E 测试**：
+```bash
+cd task3/adapters/spec-kit-mcp-adapter
+pnpm test:e2e
+```
+
+#### 2.3.5 Ethereum 合约部署配置（`task3/bounty-operator/ethereum/contract/.env`）
+
+**用途**：部署 Ethereum 合约到 Sepolia 测试网
+
+```bash
+# Sepolia 测试网 RPC URL
+SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+
+# Ethereum 主网 RPC URL（生产环境）
+MAINNET_RPC_URL=https://eth.llamarpc.com
+
+# 部署账户私钥
+PRIVATE_KEY=0x_your_deployer_private_key_here
+
+# Etherscan API Key（用于合约验证）
+ETHERSCAN_API_KEY=your_etherscan_api_key_here
+```
+
+**部署 Ethereum 合约**：
+```bash
+cd task3/bounty-operator/ethereum/contract
+
+# 编译合约
+npx hardhat compile
+
+# 部署到 Sepolia
+npx hardhat run scripts/deploy.js --network sepolia
+
+# 验证合约（自动完成，如需手动）
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
+```
+
+**当前已部署的合约**：
+- **地址**：`0x28FE83352f2451c54d9050761DF1d7F8945a8fc4`
+- **网络**：Sepolia Testnet
+- **冷静期**：0 seconds（测试环境）
+- **Etherscan**：https://sepolia.etherscan.io/address/0x28FE83352f2451c54d9050761DF1d7F8945a8fc4#code
+
+#### 2.3.6 Aptos 合约部署配置（`task3/bounty-operator/aptos/contract/.env.testnet`）
+
+**用途**：部署 Aptos 合约到 Testnet
+
+```bash
+# Aptos 网络配置
+NETWORK=testnet
+RPC_URL=https://fullnode.testnet.aptoslabs.com/v1
+
+# 部署账户私钥
+PRIVATE_KEY=0x_your_deployer_private_key_here
+
+# 合约地址（部署后填写）
+MODULE_ADDRESS=0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1
+```
+
+**部署 Aptos 合约**：
+```bash
+cd task3/bounty-operator/aptos/contract
+
+# 编译合约
+aptos move compile
+
+# 部署到 Testnet
+aptos move publish \
+  --named-addresses bounty_addr=<YOUR_ADDRESS> \
+  --network testnet \
+  --private-key-file <PATH_TO_KEY>
+
+# 记录部署的 MODULE_ADDRESS 到 .env.testnet
+```
+
+**当前已部署的合约**：
+- **地址**：`0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1`
+- **网络**：Aptos Testnet
+- **冷静期**：0 seconds（测试环境）
+
+#### 2.3.7 获取测试币
+
+**Aptos Testnet 水龙头**：
+```bash
+# 方式 1：使用 Aptos CLI
+aptos account fund-with-faucet --account <YOUR_ADDRESS>
+
+# 方式 2：访问网页水龙头
+# https://aptoslabs.com/testnet-faucet
+```
+
+**Ethereum Sepolia 水龙头**：
+- Alchemy：https://sepoliafaucet.com/
+- Infura：https://www.infura.io/faucet/sepolia
+- QuickNode：https://faucet.quicknode.com/ethereum/sepolia
+
+#### 2.3.8 安全最佳实践
+
+**⚠️ 永远不要**：
+- ❌ 将 `.env` 文件提交到 Git（已在 `.gitignore` 中）
+- ❌ 在公开仓库中暴露私钥
+- ❌ 使用生产环境私钥进行测试
+- ❌ 共享 GitHub Token（使用最小权限 Token）
+
+**✅ 推荐做法**：
+- ✅ 使用 `.env.example` 作为模板
+- ✅ 为测试和生产使用不同的钱包
+- ✅ 定期轮换 GitHub Token
+- ✅ 生产环境使用 AWS Secrets Manager / HashiCorp Vault
+- ✅ 仅授予 GitHub Token `repo` 权限（不要 `admin`）
 
 ---
 

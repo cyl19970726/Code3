@@ -104,7 +104,7 @@ export interface BountyOperator {
   claimPayout(params: ClaimPayoutParams): Promise<ClaimPayoutResult>;
 
   /**
-   * 取消 bounty（仅 sponsor 可调用，仅 Open 状态）
+   * 取消 bounty（仅 user/requester 可调用，仅 Open 状态）
    */
   cancelBounty(params: CancelBountyParams): Promise<CancelBountyResult>;
 
@@ -126,9 +126,9 @@ export interface BountyOperator {
   listBounties(params?: ListBountiesParams): Promise<ListBountiesResult>;
 
   /**
-   * 按 sponsor 查询 bounties
+   * 按 user (requester) 查询 bounties
    */
-  getBountiesBySponsor(params: GetBountiesBySponsorParams): Promise<GetBountiesBySponsorResult>;
+  getBountiesByUser(params: GetBountiesByUserParams): Promise<GetBountiesByUserResult>;
 
   /**
    * 按 worker 查询 bounties
