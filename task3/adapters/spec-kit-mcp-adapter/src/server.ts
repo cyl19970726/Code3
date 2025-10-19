@@ -2,10 +2,12 @@
 /**
  * spec-kit-mcp-adapter MCP Server
  *
- * Exposes 4 Bounty flow tools:
+ * Exposes 6 tools:
+ * - guide: Get started guide for Users and Workers
  * - publish-bounty: Publish a bounty to GitHub Issue and blockchain
  * - accept-bounty: Accept a bounty and download spec.md
  * - submit-bounty: Submit work via PR
+ * - confirm-bounty: Confirm submitted work (Sponsor confirms Worker's submission)
  * - claim-bounty: Claim payout after cooling period
  */
 
@@ -17,9 +19,11 @@ import {
   ErrorCode,
   McpError
 } from '@modelcontextprotocol/sdk/types.js';
+import { guide, guideTool } from './tools/guide.js';
 import { publishBounty, publishBountyTool } from './tools/publish-bounty.js';
 import { acceptBounty, acceptBountyTool } from './tools/accept-bounty.js';
 import { submitBounty, submitBountyTool } from './tools/submit-bounty.js';
+import { confirmBounty, confirmBountyTool } from './tools/confirm-bounty.js';
 import { claimBounty, claimBountyTool } from './tools/claim-bounty.js';
 
 // 1. Read configuration from environment variables
@@ -63,9 +67,11 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      guideTool,
       publishBountyTool,
       acceptBountyTool,
       submitBountyTool,
+      confirmBountyTool,
       claimBountyTool
     ]
   };
@@ -75,6 +81,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (request.params.name) {
+      case 'guide':
+        return await guide(request.params.arguments as any);
+
       case 'publish-bounty':
         return await publishBounty(request.params.arguments as any, config as any);
 
@@ -86,6 +95,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'submit-bounty':
         return await submitBounty(request.params.arguments as any, {
+          ...config as any,
+          repo: config.repo
+        });
+
+      case 'confirm-bounty':
+        return await confirmBounty(request.params.arguments as any, {
           ...config as any,
           repo: config.repo
         });
