@@ -30,6 +30,8 @@ import { claimBounty, claimBountyTool } from './tools/claim-bounty.js';
 const config = {
   githubToken: process.env.GITHUB_TOKEN,
   aptosPrivateKey: process.env.APTOS_PRIVATE_KEY,
+  ethereumPrivateKey: process.env.ETHEREUM_PRIVATE_KEY,
+  ethereumRpcUrl: process.env.ETHEREUM_RPC_URL,
   localSpecsDir: process.env.LOCAL_SPECS_DIR || './specs',
   repo: process.env.GITHUB_REPO || ''
 };
@@ -40,10 +42,8 @@ if (!config.githubToken) {
   process.exit(1);
 }
 
-if (!config.aptosPrivateKey) {
-  console.error('Error: APTOS_PRIVATE_KEY environment variable is required');
-  process.exit(1);
-}
+// Note: Either APTOS_PRIVATE_KEY or ETHEREUM_PRIVATE_KEY must be set (depending on which chain you use)
+// We don't enforce both, as users may only use one chain
 
 if (!config.repo) {
   console.error('Error: GITHUB_REPO environment variable is required (format: "owner/repo")');
@@ -137,6 +137,8 @@ async function main() {
   console.error(`  - Local Specs Dir: ${config.localSpecsDir}`);
   console.error(`  - GitHub Token: ${config.githubToken ? '***' : 'NOT SET'}`);
   console.error(`  - Aptos Private Key: ${config.aptosPrivateKey ? '***' : 'NOT SET'}`);
+  console.error(`  - Ethereum Private Key: ${config.ethereumPrivateKey ? '***' : 'NOT SET'}`);
+  console.error(`  - Ethereum RPC URL: ${config.ethereumRpcUrl || 'NOT SET'}`);
 }
 
 main().catch((error) => {
