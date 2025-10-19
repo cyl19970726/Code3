@@ -106,10 +106,13 @@ graph TD
 3. **claim-bounty** - 领取奖励
 
 ### spec-kit-mcp (功能实现)
-4. **plan** - 生成实现计划
-5. **tasks** - 拆分任务清单
-6. **analyze** - 分析代码库
-7. **implement** - 实现功能
+4. **spec-context** - 读取 spec.md 上下文（requirements, entities）
+5. **plan-context** - 读取 plan.md 上下文（architecture, tech stack）
+6. **tasks-context** - 读取 tasks.md 上下文（tasks, phases）
+7. **plan** - 生成实现计划
+8. **tasks** - 拆分任务清单
+9. **analyze** - 分析代码库
+10. **implement** - 实现功能
 
 ## Example
 
@@ -121,30 +124,35 @@ acceptBounty({
   localDir: "./workspace/repo"
 })
 
-// 2-5. Implement using spec-kit-mcp
+// 2. Read spec context (optional, to understand requirements)
+specContext({ specPath: "./workspace/repo/specs/001/spec.md" })
+
+// 3-6. Implement using spec-kit-mcp
 plan({ specPath: "./workspace/repo/specs/001/spec.md" })
+planContext({ planPath: "./workspace/repo/specs/001/plan.md" })  // Read plan context
 tasks({ planPath: "./workspace/repo/specs/001/plan.md" })
+tasksContext({ tasksPath: "./workspace/repo/specs/001/tasks.md" })  // Read tasks context
 analyze({ projectPath: "./workspace/repo", focus: "auth" })
 implement({
   taskDescription: "Implement JWT auth",
   specPath: "./workspace/repo/specs/001/spec.md"
 })
 
-// 6. Create PR manually (git)
+// 7. Create PR manually (git)
 // git checkout -b feat/jwt-auth
 // git add . && git commit -m "feat: JWT auth"
 // git push && gh pr create
 
-// 7. Submit PR
+// 8. Submit PR
 submitBounty({
   issueUrl: "https://github.com/org/repo/issues/42",
   prUrl: "https://github.com/org/repo/pull/123",
   chain: "ethereum-sepolia"
 })
 
-// 8. Wait for User to merge + confirm
+// 9. Wait for User to merge + confirm
 
-// 9. Claim payment
+// 10. Claim payment
 claimBounty({
   issueUrl: "https://github.com/org/repo/issues/42",
   chain: "ethereum-sepolia"
