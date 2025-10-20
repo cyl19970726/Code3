@@ -12,7 +12,7 @@
  * - Uses GitHubDataLayer for all GitHub API operations
  */
 
-import { GitHubDataLayer } from '@code3-team/data-layers-github';
+import { GitHubDataLayer, serializeIssueBody } from '@code3-team/data-layers-github';
 import {
   DataOperator,
   UploadTaskDataParams,
@@ -69,17 +69,20 @@ export class SpecKitDataOperator implements DataOperator {
     // 2. Generate taskHash
     const taskHash = crypto.createHash('sha256').update(specContent).digest('hex');
 
-    // 3. Generate Issue body (add metadata frontmatter via GitHubDataLayer)
+    // 3. Prepare full metadata
     const fullMetadata = {
       ...metadata,
       taskHash,
       workflow: metadata.workflow || { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' }
     };
 
-    // 4. Create GitHub Issue via GitHubDataLayer
+    // 4. Serialize metadata + content to Issue body (YAML frontmatter + Markdown)
+    const issueBody = serializeIssueBody(fullMetadata, specContent);
+
+    // 5. Create GitHub Issue via GitHubDataLayer
     const result = await this.githubLayer.createIssue({
       title: `[spec-kit] ${title}`,
-      body: specContent, // GitHubDataLayer will serialize metadata + content
+      body: issueBody,
       labels: ['bounty', 'spec-kit', metadata.chain?.name || 'aptos']
     });
 
@@ -141,11 +144,16 @@ export class SpecKitDataOperator implements DataOperator {
   async uploadSubmission(params: UploadSubmissionParams): Promise<UploadSubmissionResult> {
     const { taskUrl, submissionData } = params;
 
-    // 1. Parse taskUrl to get Issue number
+    // 1. Parse taskUrl to get Issue number and metadata
     const issue = await this.githubLayer.getIssue({ issueUrl: taskUrl });
     const issueNumber = issue.issueNumber;
+    const metadata = issue.metadata as any;
 
-    // 2. Generate PR title and body
+    // 2. Read sourceBranch from metadata (fallback to 'main' for backward compatibility)
+    const sourceBranch = metadata.repository?.sourceBranch || 'main';
+    console.log(`[SpecKitDataOperator] Using sourceBranch: ${sourceBranch} (from metadata: ${!!metadata.repository?.sourceBranch})`);
+
+    // 3. Generate PR title and body
     const prTitle = `[spec-kit] Submission for #${issueNumber}`;
     const prBody = `## Submission for Issue #${issueNumber}
 
@@ -162,15 +170,15 @@ ${submissionData.testing || 'All tests passed.'}
 Closes #${issueNumber}
 `;
 
-    // 3. Create Pull Request via GitHubDataLayer
+    // 4. Create Pull Request via GitHubDataLayer
     const result = await this.githubLayer.createPR({
       title: prTitle,
       body: prBody,
-      head: submissionData.branchName, // Submission branch
-      base: 'main' // Target branch
+      head: submissionData.branchName, // Submission branch (worker-bounty-{bountyId})
+      base: sourceBranch // Target branch (Requester's sourceBranch)
     });
 
-    console.log(`[SpecKitDataOperator] Created PR: ${result.prUrl}`);
+    console.log(`[SpecKitDataOperator] Created PR: ${result.prUrl} (base: ${sourceBranch})`);
 
     return {
       submissionUrl: result.prUrl

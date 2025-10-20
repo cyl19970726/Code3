@@ -82,8 +82,49 @@ export async function acceptBounty(
       taskUrl: args.issueUrl
     });
 
-    // 4. Return result
-    const message = `✅ Bounty accepted successfully!\n\n- Bounty ID: ${result.bountyId}\n- Local path: ${result.localPath}\n- Tx Hash: ${result.txHash}\n- Chain: ${args.chain} (${chainConfig.network})\n\nYou can now start working on the spec.`;
+    // 4. Get metadata to extract repository information
+    const metadata = await dataOperator.getTaskMetadata({ taskUrl: args.issueUrl });
+    const { repository } = metadata;
+
+    // 5. Generate Worker branch name
+    const workerBranchName = `worker-bounty-${result.bountyId}`;
+
+    // 6. Generate repository instructions
+    let repoInstructions = '';
+    if (repository) {
+      const repoName = repository.url.split('/').pop()?.replace('.git', '') || 'repo';
+
+      repoInstructions = `\n\n📦 Repository Setup Instructions:
+
+\`\`\`bash
+# Clone the repository with source branch
+git clone ${repository.url} --branch ${repository.sourceBranch}
+cd ${repoName}
+
+# Create your worker branch
+git checkout -b ${workerBranchName}
+\`\`\`
+
+📁 Source branch: ${repository.sourceBranch}
+📄 Spec file: ${repoName}/${repository.specPath}
+
+💡 Next steps:
+   1. Read the spec file at ${repository.specPath}
+   2. Implement the feature on branch: ${workerBranchName}
+   3. Commit and push your changes:
+      \`git push origin ${workerBranchName}\`
+   4. Submit your work:
+      \`submit-bounty --issueUrl ${args.issueUrl} --branchName ${workerBranchName}\`
+`;
+    }
+
+    // 7. Return result
+    const message = `✅ Bounty accepted successfully!
+
+- Bounty ID: ${result.bountyId}
+- Local path: ${result.localPath}
+- Tx Hash: ${result.txHash}
+- Chain: ${args.chain} (${chainConfig.network})${repoInstructions}`;
 
     return {
       content: [{ type: 'text', text: message }]

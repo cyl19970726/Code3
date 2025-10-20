@@ -78,4 +78,9 @@ export interface TaskMetadata {
     url: string; // Data layer URL
     submissionUrl?: string; // Submission URL (PR URL, IPFS CID, etc.) - set after submission
   };
+  repository?: {
+    url: string; // Git clone URL (HTTPS format)
+    sourceBranch: string; // Requester's working branch (clone source & PR target)
+    specPath: string; // Relative path to spec.md (e.g., ./specs/027/spec.md)
+  };
 }

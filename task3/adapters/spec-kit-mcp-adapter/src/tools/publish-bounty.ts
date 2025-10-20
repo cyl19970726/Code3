@@ -27,7 +27,8 @@ const PublishBountySchema = z.object({
   repo: z.string().describe('GitHub repository (format: "owner/repo")'),
   amount: z.string().describe('Bounty amount (e.g., "100000000" for 1 APT, or "10000000000000000" for 0.01 ETH)'),
   asset: z.string().describe('Asset symbol (e.g., "APT", "ETH")'),
-  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
+  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'),
+  branch: z.string().default('main').describe('Source branch (Requester\'s working branch for Worker to clone and PR back to)')
 });
 
 export async function publishBounty(
@@ -79,7 +80,12 @@ export async function publishBounty(
       });
     }
 
-    // 4. Create Task3Operator instance and call publishFlow
+    // 4. Generate repository metadata
+    const repoUrl = `https://github.com/${args.repo}.git`;
+    const sourceBranch = args.branch;
+    const specPathRelative = `./${args.specPath}`;
+
+    // 5. Create Task3Operator instance and call publishFlow
     const task3Operator = new ConcreteTask3Operator();
 
     const result = await task3Operator.publishFlow({
@@ -109,6 +115,11 @@ export async function publishBounty(
         dataLayer: {
           type: 'github',
           url: '' // Will be set after upload
+        },
+        repository: {
+          url: repoUrl,
+          sourceBranch: sourceBranch,
+          specPath: specPathRelative
         }
       },
       amount: args.amount,
@@ -174,6 +185,11 @@ Supported chains:
         enum: ['aptos', 'ethereum'],
         default: 'ethereum',
         description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
+      },
+      branch: {
+        type: 'string',
+        default: 'main',
+        description: 'Source branch (Requester\'s working branch for Worker to clone and PR back to)'
       }
     },
     required: ['specPath', 'repo', 'amount', 'asset', 'chain']
