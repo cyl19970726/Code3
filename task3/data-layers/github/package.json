@@ -1,0 +1,29 @@
+{
+  "name": "@code3-team/data-layers-github",
+  "version": "1.0.0",
+  "description": "GitHub data layer implementation for Code3 task data operations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.0",
+    "yaml": "^2.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "keywords": ["github", "data-layer", "code3"],
+  "author": "Code3 Team",
+  "license": "MIT"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@code3-team/bounty-operator",
+  "version": "1.0.0",
+  "description": "Unified interface for on-chain bounty operations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "keywords": ["bounty", "blockchain", "aptos", "ethereum"],
+  "author": "Code3 Team",
+  "license": "MIT"
+}

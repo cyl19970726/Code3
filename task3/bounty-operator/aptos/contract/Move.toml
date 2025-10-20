@@ -1,0 +1,13 @@
+[package]
+name = "code3_bounty"
+version = "1.0.0"
+authors = ["Code3 Team"]
+
+[addresses]
+code3 = "_"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "mainnet" }
+AptosStdlib = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-stdlib", rev = "mainnet" }
+
+[dev-dependencies]

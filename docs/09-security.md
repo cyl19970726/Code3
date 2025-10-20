@@ -161,7 +161,7 @@ services:
 
 ### 3.2 合约权限
 
-**文件路径**: [Code3/task3/aptos/sources/bounty.move](../../task3/aptos/sources/bounty.move)
+**文件路径**: [Code3/task3/bounty-operator/aptos/contract/sources/bounty.move](../../task3/bounty-operator/aptos/contract/sources/bounty.move)
 
 | 函数 | 权限要求 | 校验逻辑 |
 |------|---------|---------|
@@ -379,7 +379,7 @@ pnpm test tests/integration/abi-consistency.test.ts
 
 ### 4.1 链上审计（事件）
 
-**文件路径**: [Code3/task3/aptos/sources/bounty.move](../../task3/aptos/sources/bounty.move)
+**文件路径**: [Code3/task3/bounty-operator/aptos/contract/sources/bounty.move](../../task3/bounty-operator/aptos/contract/sources/bounty.move)
 
 | 事件 | 触发时机 | 字段 |
 |------|---------|------|

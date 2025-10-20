@@ -1,268 +1,448 @@
-# Code3 文档中心
+# Code3 技术文档
 
-> **Code3** — 将闲置的高阶 Coding Agents 变为可接单的算力与智能，服务没有订阅或短期不在线的开发者。
-
----
-
-## 快速导航
-
-### 新手入门
-1. **项目愿景** → [01-数据流](./01-datastream.md) 第 1 节
-2. **用户快速上手** ⭐ → [02-架构设计](./02-architecture.md) 第 10 节（Requester/Worker/Reviewer）
-3. **开发者快速启动** → [04-快速开始](./04-quickstart.md)
-4. **核心概念** → [99-术语表](./99-glossary.md)
-
-### 开发者
-- **系统架构** → [02-架构设计](./02-architecture.md)
-- **数据模型** ⭐ → [05-数据模型](./05-data-model.md)（所有数据结构的单一事实来源）
-- **MCP 工具接口** → [06-接口与契约](./06-interfaces.md)
-- **完整工作流** → [08-工作流指南](./08-workflow.md)
-
-### 运维与安全
-- **包结构与配置** → [03-包结构](./03-packages-structure.md)
-- **安全策略** → [09-安全策略](./09-security.md)
-
-### 设计与 UI
-- **Dashboard UI/UX** → [07-UI/UX 设计](./07-ui-ux.md)
+> Code3 是一个多链多工作流的去中心化 Bounty 系统
+>
+> 参考：[TRUTH.md](../../TRUTH.md) ADR-012
 
 ---
 
-## 文档列表（按编号阅读）
+## 📖 文档导航
 
-| 编号 | 文档名称 | 用途 |
+### 核心文档（按阅读顺序）
+
+#### 1. [数据模型](./01-data-model.md)
+**定义**：Bounty 实体、状态机、TaskMetadata 结构
+
+**适合**：
+- 想了解 Bounty 的核心数据结构
+- 想了解状态流转规则
+- 想了解幂等性和冷静期机制
+
+**关键内容**：
+- Bounty 实体（11 个字段）
+- BountyStatus 枚举（6 种状态）
+- 状态机（Open → Accepted → Submitted → Confirmed → Claimed）
+- TaskMetadata 结构（code3/v2 schema）
+- 冷静期机制（7 天）
+- 幂等性机制（taskHash）
+
+---
+
+#### 2. [接口定义](./02-interfaces.md)
+**定义**：三层架构的接口定义与实现示例
+
+**适合**：
+- 开发者实现新链支持
+- 开发者实现新 workflow 适配器
+- 想了解依赖注入模式
+
+**关键内容**：
+- BountyOperator 接口（11 个方法）
+- DataOperator 接口（5 个方法）
+- Task3Operator 抽象类（5 个 flow）
+- 实现示例（AptosBountyOperator, SpecKitDataOperator）
+- 调用关系图
+
+---
+
+#### 3. [架构设计](./03-architecture.md)
+**定义**：系统架构、模块划分、技术选型
+
+**适合**：
+- 架构师了解整体设计
+- 新加入的开发者了解系统全貌
+- 技术选型参考
+
+**关键内容**：
+- 系统架构总览
+- 三层架构详解（orchestration, bountyOperator, dataOperator）
+- 技术栈（TypeScript, Next.js, Aptos, Ethereum）
+- 模块间通信（依赖注入、事件驱动）
+- 安全架构
+- 扩展性设计
+
+---
+
+#### 4. [数据流](./04-datastream.md)
+**定义**：完整 Bounty 生命周期的数据流
+
+**适合**：
+- 想了解完整用户流程
+- 调试数据流问题
+- 理解幂等性和状态验证实现
+
+**关键内容**：
+- 5 个阶段数据流详解
+  - Phase 1: Publish（幂等性检查）
+  - Phase 2: Accept（状态验证）
+  - Phase 3: Submit（上传提交内容）
+  - Phase 4: Confirm（冷静期开始）
+  - Phase 5: Claim（冷静期验证）
+- 数据格式示例（JSON/TypeScript）
+- 错误处理场景
+
+---
+
+#### 5. [包结构与目录组织](./05-packages-structure.md)
+**定义**：代码组织、模块依赖、命名规范
+
+**适合**：
+- 开发者了解代码结构
+- 新增模块时参考
+- CI/CD 配置
+
+**关键内容**：
+- 总体目录结构
+- spec-mcp/ 工作流层（3 个 workflow）
+- task3/ 核心基础设施（7 个模块）
+- 模块依赖关系图
+- 包命名规范（@code3-team/）
+- 导入导出规范
+- 扩展性设计
+
+---
+
+#### 6. [快速开始](./06-quickstart.md)
+**定义**：从零开始运行 Code3 的完整指南
+
+**适合**：
+- 新用户快速上手
+- 部署到测试环境
+- 完整用户流程体验
+
+**关键内容**：
+- 环境配置（Node.js, GitHub Token, 钱包）
+- 部署合约（Aptos, Ethereum）
+- 第一个 Bounty 完整流程
+  1. 发布 Bounty
+  2. 接单
+  3. 实施
+  4. 提交
+  5. 确认
+  6. 领取
+- 使用 Dashboard
+- 常见问题（幂等性、状态验证、冷静期、Gas）
+
+---
+
+#### 7. [UI/UX 设计](./07-ui-ux.md)
+**定义**：Dashboard 的用户界面和交互设计
+
+**适合**：
+- 前端开发者实现 UI
+- 设计师了解设计规范
+- 产品经理了解用户体验
+
+**关键内容**：
+- 设计原则（简洁、状态透明、多链无感）
+- 页面结构（列表页、详情页、发布页、仪表板）
+- 状态流转 UI（6 种状态的不同展示）
+- 钱包连接（Petra, MetaMask）
+- 响应式设计
+- 可访问性（A11y）
+
+---
+
+### 扩展文档
+
+#### 99. [术语表](./99-glossary.md)
+**定义**：所有术语和概念的完整定义
+
+**适合**：
+- 快速查找术语定义
+- 理解专业术语
+
+**内容**：
+- A-Z 字母顺序排列
+- 60+ 术语定义
+- 交叉引用到相关文档
+
+---
+
+## 🎯 快速查找
+
+### 按角色
+
+| 角色 | 推荐阅读顺序 |
+|------|-------------|
+| **新用户** | 06-quickstart.md → 01-data-model.md → 07-ui-ux.md |
+| **Requester** | 06-quickstart.md Section 4.2 → 07-ui-ux.md Section 5 |
+| **Worker** | 06-quickstart.md Section 4.3-4.7 → 01-data-model.md Section 2 |
+| **前端开发者** | 07-ui-ux.md → 05-packages-structure.md Section 3.6 → 02-interfaces.md |
+| **后端开发者** | 02-interfaces.md → 04-datastream.md → 05-packages-structure.md Section 3.7 |
+| **合约开发者** | 01-data-model.md Section 2 → 02-interfaces.md Section 2 → 05-packages-structure.md Section 3.1 |
+| **架构师** | 03-architecture.md → 02-interfaces.md → 04-datastream.md |
+| **产品经理** | 01-data-model.md → 06-quickstart.md → 07-ui-ux.md |
+
+---
+
+### 按任务
+
+| 任务 | 相关文档 |
+|------|---------|
+| **实现新链支持** | 02-interfaces.md Section 2 → 05-packages-structure.md Section 9.1 → 03-architecture.md Section 7.1 |
+| **实现新 workflow** | 02-interfaces.md Section 3 → 05-packages-structure.md Section 9.3 → 03-architecture.md Section 7.3 |
+| **实现新数据层** | 02-interfaces.md Section 3 → 05-packages-structure.md Section 3.5 → 03-architecture.md Section 7.2 |
+| **调试状态验证问题** | 04-datastream.md Section 2 → 01-data-model.md Section 2.3 |
+| **调试幂等性问题** | 04-datastream.md Section 2.1 → 01-data-model.md Section 8 |
+| **调试冷静期问题** | 04-datastream.md Section 2.5 → 01-data-model.md Section 7 |
+| **部署到测试网** | 06-quickstart.md Section 3 |
+| **部署到主网** | 06-quickstart.md Section 3 → 03-architecture.md Section 8.3 |
+
+---
+
+### 按概念
+
+| 概念 | 相关文档 | 章节 |
 |------|---------|------|
-| **01** | [数据流](./01-datastream.md) | 从需求发布到赏金结算的完整数据流 |
-| **02** | [系统架构](./02-architecture.md) | 技术栈选择、系统分层、模块职责 + **用户快速上手指南**（第 10 节）⭐ |
-| **03** | [包结构与配置](./03-packages-structure.md) | Monorepo 结构、构建顺序、环境变量 |
-| **04** | [快速开始与部署](./04-quickstart.md) | 5 分钟本地启动、合约部署、端到端测试 |
-| **05** | [数据模型](./05-data-model.md) ⭐ | 核心数据结构、类型映射、状态机（单一事实来源） |
-| **06** | [接口与契约](./06-interfaces.md) | 23 个 MCP 工具（7 spec-kit + 11 aptos-chain + 5 github）、合约 Entry Functions + View Functions、API 端点 |
-| **07** | [UI/UX 设计](./07-ui-ux.md) | Dashboard 界面、交互流程、视觉规范 |
-| **08** | [工作流指南](./08-workflow.md) | Requester/Worker/Reviewer 完整操作步骤 |
-| **09** | [安全策略](./09-security.md) | 密钥管理、权限边界、审计机制 |
-| **99** | [术语表](./99-glossary.md) | 所有专业术语与缩写的定义 |
+| **Bounty 实体** | 01-data-model.md | Section 2.1 |
+| **状态机** | 01-data-model.md | Section 2.3 |
+| **幂等性** | 01-data-model.md | Section 8 |
+| **冷静期** | 01-data-model.md | Section 7 |
+| **BountyOperator** | 02-interfaces.md | Section 2 |
+| **DataOperator** | 02-interfaces.md | Section 3 |
+| **Orchestration** | 02-interfaces.md | Section 4 |
+| **依赖注入** | 03-architecture.md | Section 4.1 |
+| **三层架构** | 03-architecture.md | Section 2 |
+| **数据流** | 04-datastream.md | Section 2 |
+| **包命名** | 05-packages-structure.md | Section 5.2 |
+| **模块依赖** | 05-packages-structure.md | Section 4 |
 
 ---
 
-## 核心概念
+## 🔧 常见任务
 
-### 三大角色
-- **Requester**（发布者）：提出需求、设立赏金、审核 PR
-- **Worker**（接单者）：接单、实现功能、提交 PR、领取赏金
-- **Reviewer**（审核者）：评审 PR、决定是否合并
-
-### 三件套（Three-Piece Suite）
-- `spec.md`：需求规格说明（技术无关）
-- `plan.md`：技术方案与数据模型
-- `tasks.md`：可执行任务列表（带依赖关系）
-
-### 三大 MCP 服务（13 个工具）
-| MCP 服务 | 工具数 | 核心工具 |
-|---------|--------|---------|
-| **spec-kit-mcp** | 7 | specify, plan, tasks, **clarify** ✨, **analyze** ✨, **implement** ✨, constitution |
-| **aptos-chain-mcp** | 6 | create_bounty, accept_bounty, submit_pr, mark_merged, claim_payout, cancel_bounty |
-| **github-mcp-server** | 外部 | create_issue, fork, create_pr, merge_pr, comment, label |
-
-✨ **新增工具**（对标 spec-kit）:
-- `clarify`: 11 类需求澄清检查（防止返工）
-- `analyze`: 6 类质量检测 + Constitution Authority
-- `implement`: 5 阶段 TDD 执行（Setup → Tests(红) → Core(绿) → Integration → Polish）
-
-💡 **角色差异化**：不同角色（Requester/Worker/Reviewer）通过 **AGENTS.md/CLAUDE.md 配置指南**来指导使用哪些工具，而非安装不同的包。详见 [02-架构设计](./02-architecture.md) 第 9 节。
-
----
-
-## 技术栈
-
-### 前端
-- Next.js 14 (App Router)
-- TypeScript
-- @aptos-labs/wallet-adapter-react（M4 钱包连接）
-
-### 后端
-- Node.js + Express + TypeScript
-- GitHub Webhook 处理
-- 链上事件索引
-
-### 区块链
-- **Aptos Testnet/Mainnet**
-- Move 智能合约
-- Fungible Asset (USDT)
-
-### MCP 工具（三大服务）
-- **spec-kit-mcp** — 本项目实现，7 个 spec-kit 工作流工具
-- **aptos-chain-mcp** — 本项目实现，6 个 Aptos 链上交互工具
-- **github-mcp-server** — 官方外部依赖，GitHub 操作
-- TypeScript（Node 20+）+ pnpm Monorepo
-
----
-
-## 里程碑
-
-### M1 ✅ - 文档就绪
-- [x] 统一数据模型（05-data-model.md）
-- [x] MCP 工具接口定义（06-interfaces.md）
-- [x] 完整工作流指南（08-workflow.md）
-
-### M2 🔄 - MCP 最小闭环（Testnet）
-- [ ] spec-kit-mcp 实现（7 个工具：specify, plan, tasks, clarify, analyze, implement, constitution）
-- [ ] aptos-chain-mcp 实现（6 个工具：create_bounty, accept_bounty, submit_pr, mark_merged, claim_payout, cancel_bounty）
-- [ ] github-mcp-server 集成（Issue/PR/Fork/Comment 操作）
-- [ ] AGENTS.md/CLAUDE.md 角色配置模板生成
-- [ ] Webhook 后端（mark_merged 自动触发）
-- [ ] e2e 测试通过（单 Issue → 单 PR → 冷静期 → 领取）
-
-### M3 - Dashboard + 合约部署（Testnet）
-- [ ] Dashboard 前端（任务列表、赏金详情）
-- [ ] 合约部署到 Testnet
-- [ ] 链上事件索引
-
-### M4 - 观测 + 钱包连接（Mainnet）
-- [ ] Dashboard 钱包连接（Wallet Adapter）
-- [ ] 前端触发链上操作
-- [ ] 统计页面（任务总数、总支付、Top Workers）
-- [ ] 合约部署到 Mainnet
-
----
-
-## 快速开始
-
-### 1. 安装依赖
+### 配置开发环境
 ```bash
-git clone https://github.com/cyl19970726/Code3.git
-cd Code3
-pnpm install
+# 1. 克隆仓库
+git clone https://github.com/code3-team/code3.git
+cd code3
+
+# 2. 安装依赖
+npm install
+
+# 3. 配置环境变量
+cp .env.example .env
+# 编辑 .env，填入 GitHub Token、私钥等
+
+# 4. 构建所有包
+npm run build
 ```
 
-### 2. 配置环境变量
+**详细步骤**：[06-quickstart.md Section 2](./06-quickstart.md#2-环境配置)
+
+---
+
+### 部署合约
+
+**Aptos**：
 ```bash
-cp .env.example .env.local
-# 编辑 .env.local 填入 GITHUB_TOKEN, APTOS_API_KEY
+cd Code3/task3/bounty-operator/aptos/contract
+aptos move compile
+aptos move publish --named-addresses bounty_addr=<YOUR_ADDRESS>
 ```
 
-### 3. 启动服务
+**Ethereum**：
 ```bash
-# MCP 服务（安装到 Codex/Claude Code）
-# spec-kit-mcp: 工作流工具
-pnpm --filter @code3/spec-kit-mcp dev
+cd Code3/task3/bounty-operator/ethereum/contract
+npx hardhat compile
+npx hardhat run scripts/deploy.ts --network sepolia
+```
 
-# aptos-chain-mcp: 链上交互工具
-pnpm --filter @code3/aptos-mcp dev
+**详细步骤**：[06-quickstart.md Section 3](./06-quickstart.md#3-部署合约仅首次)
 
-# Dashboard（前端）
-pnpm --filter @code3/frontend dev
+---
+
+### 运行测试
+
+**运行所有测试**：
+```bash
+npm test
+```
+
+**运行特定包的测试**：
+```bash
+cd Code3/task3/orchestration
+npm test
+```
+
+**E2E 测试**：
+```bash
+cd Code3/task3/adapters/spec-kit-adapter
+npm run test:e2e
+```
+
+**详细步骤**：[06-quickstart.md Section 9](./06-quickstart.md#9-测试)
+
+---
+
+### 启动 Dashboard
+
+```bash
+cd Code3/task3/frontend
+npm install
+npm run dev
 # 访问 http://localhost:3000
-
-# Webhook 后端
-pnpm --filter @code3/backend dev
 ```
 
-### 4. 验证环境
-```bash
-bash scripts/check_env.sh
-pnpm test
-```
-
-详见 → [04-快速开始与部署](./04-quickstart.md)
+**详细步骤**：[06-quickstart.md Section 7.1](./06-quickstart.md#71-启动-dashboard)
 
 ---
 
-## 贡献指南
+## 📚 文档约定
 
-### 修改数据结构
-⭐ **强制要求**：任何涉及数据结构的修改，必须先更新 [05-data-model.md](./05-data-model.md)，再更新代码。
+### 术语使用
 
-### 新增 MCP 工具
-1. 在 [06-interfaces.md](./06-interfaces.md) 定义接口
-2. 在对应 MCP 包中实现（`spec-mcp/*`）
-3. 更新 [02-architecture.md](./02-architecture.md) 的工具清单
-4. 更新 [08-workflow.md](./08-workflow.md) 的使用示例
+- **Bounty**：链上 Bounty 实体
+- **Task**：任务数据（存储在 GitHub Issue/IPFS）
+- **Requester/User**：发布 Bounty 的用户
+- **Worker**：接受并完成 Bounty 的用户
+- **Flow**：Orchestration 层的完整业务流程
+- **Operator**：实现特定接口的类（BountyOperator, DataOperator）
 
-### 文档规范
-- 使用中文（术语保留英文）
-- 所有文件路径使用相对路径（如 `[Code3/spec-mcp/spec-kit-mcp/src/tools/specify.ts](../../spec-mcp/spec-kit-mcp/src/tools/specify.ts)`）
-- 引用 TRUTH.md ADR（如 `参考：[TRUTH.md](../../TRUTH.md) ADR-005`）
+**完整术语表**：[99-glossary.md](./99-glossary.md)
 
 ---
 
-## 测试策略
+### 代码示例
 
-### 测试层级
-1. **单元测试**：每个 MCP 工具独立测试
-2. **集成测试**：MCP 工具与外部服务交互测试（GitHub API、Aptos 链）
-3. **E2E 测试**：完整用户流程测试（Issue → PR → 赏金领取）
-
-### ABI 一致性测试 ⭐
-> 参考：[TRUTH.md](../../TRUTH.md) ADR-011（Contract/Client Type Consistency Mechanism）
-
-**问题背景**：Aptos Move 合约与 TypeScript 客户端存在类型系统差异，可能导致：
-- 类型转换错误（string vs u64）
-- 返回值解析错误（tuple vs object）
-- Option<T> 处理错误（`{vec: []}` 格式）
-
-**解决方案**：
-- **ABI 签名验证**：从链上获取 ABI，验证函数签名与客户端一致
-- **实际调用测试**：真实链上调用验证返回值解析
-- **类型转换规范**：明确 Move ↔ TypeScript 映射表（详见 [09-安全策略](./09-security.md) 第 3.4 节）
-
-**测试文件**：
-```bash
-# ABI 一致性测试
-Code3/spec-mcp/aptos-mcp/tests/integration/abi-consistency.test.ts
-
-# 运行测试
-cd Code3/spec-mcp/aptos-mcp
-pnpm test tests/integration/abi-consistency.test.ts
-```
-
-**关键测试用例**：
+**TypeScript 代码块**：
 ```typescript
-describe("ABI Consistency Tests", () => {
-  // 验证函数签名
-  it("get_bounty should accept u64 and return tuple with 12 fields", () => {
-    expect(func!.params).toEqual(["u64"]);
-    expect(func!.return.length).toBe(12);
-  });
-
-  // 验证返回值解析
-  it("should parse get_bounty return value correctly (array format)", async () => {
-    const bounty = await client.getBounty("1");
-    expect(typeof bounty.id).toBe("string");
-    expect(typeof bounty.status).toBe("number");
-  });
-});
+export interface BountyOperator {
+  createBounty(params: CreateBountyParams): Promise<CreateBountyResult>;
+}
 ```
 
-### CI/CD 集成（M3 阶段）
-- 合约部署后自动运行 ABI 一致性测试
-- aptos-chain-mcp 代码变更后自动运行测试
-- 测试失败阻塞 PR 合并
+**Bash 命令**：
+```bash
+npm install
+npm run build
+```
+
+**JSON 配置**：
+```json
+{
+  "name": "@code3-team/orchestration",
+  "version": "1.0.0"
+}
+```
 
 ---
 
-## 参考资源
+### 引用规范
 
-### 内部文档
-- **TRUTH.md** — 架构决策记录（ADR-001 ~ ADR-009）
-  - ⭐ **ADR-009**：三大 MCP 统一架构（替代原 ADR-005 角色分层）
-- **AGENTS.md** — 工作代理总览与执行计划（Codex 用户配置指南）
-- **CLAUDE.md** — 开发规范与执行约束（Claude Code 用户配置指南）
+**文档引用**：
+- 同目录：`[01-data-model.md](./01-data-model.md)`
+- 特定章节：`[01-data-model.md Section 2.1](./01-data-model.md#21-bounty-实体)`
 
-### 外部资源
-- [spec-kit](https://github.com/spec-kit/spec-kit) — 工作流参考实现
-- [Aptos Documentation](https://aptos.dev) — Aptos 区块链官方文档
-- [Aptos Wallet Adapter](https://github.com/aptos-labs/aptos-wallet-adapter) — 前端钱包集成
-- [MCP Protocol](https://modelcontextprotocol.io) — Model Context Protocol 规范
+**代码引用**：
+- 文件路径：`Code3/task3/orchestration/src/publish-flow.ts`
+- 行号：`Code3/task3/orchestration/src/publish-flow.ts:42`
 
 ---
 
-## 联系方式
+## 🤝 贡献
 
-- **GitHub Issues**: [cyl19970726/Code3/issues](https://github.com/cyl19970726/Code3/issues)
-- **项目主页**: [github.com/cyl19970726/Code3](https://github.com/cyl19970726/Code3)
+### 文档贡献
+
+欢迎提交 PR 改进文档！
+
+**文档规范**：
+- 标题：`# XX — 标题`（XX 为编号）
+- 结构：使用二级标题（##）分节
+- 代码：使用代码块，注明语言
+- 引用：使用相对路径引用其他文档
+- 术语：首次出现时链接到 [99-glossary.md](./99-glossary.md)
+
+**详细规范**：[../../CLAUDE.md Section 5](../../CLAUDE.md#5-文档规范)
 
 ---
 
-## 许可证
+### 代码贡献
 
-MIT License - 详见 [LICENSE](../../LICENSE)
+**提交 Issue**：
+- Bug 报告：https://github.com/code3-team/code3/issues/new?template=bug_report.md
+- 功能请求：https://github.com/code3-team/code3/issues/new?template=feature_request.md
+
+**提交 PR**：
+1. Fork 仓库
+2. 创建功能分支：`git checkout -b feature/your-feature`
+3. 编写代码 + 测试
+4. 提交 PR：参考 [CONTRIBUTING.md](../../CONTRIBUTING.md)
+
+---
+
+## 🔗 外部链接
+
+### 官方资源
+- **GitHub**：https://github.com/code3-team/code3
+- **Discord**：https://discord.gg/code3
+- **Twitter**：https://twitter.com/code3team
+- **官网**：https://code3.dev
+
+### 技术文档
+- **Aptos**：https://aptos.dev/
+- **Ethereum**：https://ethereum.org/developers
+- **MCP**：https://modelcontextprotocol.io/
+- **Next.js**：https://nextjs.org/docs
+- **TypeScript**：https://www.typescriptlang.org/docs
+
+---
+
+## ❓ 常见问题
+
+### Q1: Code3 支持哪些区块链？
+**A**: 目前支持 Aptos 和 Ethereum，未来计划支持 Sui、Solana 等。
+
+**参考**：[03-architecture.md Section 3.2](./03-architecture.md#32-区块链技术)
+
+---
+
+### Q2: 如何实现新链支持？
+**A**: 实现 `BountyOperator` 接口（11 个方法），部署合约，adapter 中切换实例。
+
+**参考**：[02-interfaces.md Section 2](./02-interfaces.md#2-bountyoperator-接口), [05-packages-structure.md Section 9.1](./05-packages-structure.md#91-新增链)
+
+---
+
+### Q3: 为什么需要冷静期？
+**A**: 防止 Requester 确认后立即撤回，给双方反悔的时间，增加系统安全性。
+
+**参考**：[01-data-model.md Section 7](./01-data-model.md#7-冷静期机制)
+
+---
+
+### Q4: 如何避免重复创建 Bounty？
+**A**: 使用幂等性机制，通过 `taskHash = SHA256(taskData)` 检查是否已存在。
+
+**参考**：[01-data-model.md Section 8](./01-data-model.md#8-幂等性机制), [04-datastream.md Section 2.1](./04-datastream.md#21-phase-1-publish-发布-bounty)
+
+---
+
+### Q5: Worker 能否在冷静期未结束时领取赏金？
+**A**: 不能。`claimFlow` 会验证 `coolingUntil` 时间戳，未结束时抛出错误。
+
+**参考**：[04-datastream.md Section 2.5](./04-datastream.md#25-phase-5-claim-领取赏金), [06-quickstart.md Section 8.3](./06-quickstart.md#83-冷静期验证)
+
+---
+
+## 📝 更新日志
+
+### 2025-10-02
+- 创建完整技术文档（01-07, 99, README）
+- 定义三层架构接口（BountyOperator, DataOperator, Task3Operator）
+- 完善数据模型（Bounty, BountyStatus, TaskMetadata）
+- 补充快速开始指南
+- 添加 UI/UX 设计规范
+
+---
+
+## 📄 许可证
+
+MIT License
+
+---
+
+**祝你使用愉快！** 🎉
+
+如有问题，请访问 [GitHub Issues](https://github.com/code3-team/code3/issues) 或加入 [Discord 社区](https://discord.gg/code3)。

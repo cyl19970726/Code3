@@ -1,0 +1,32 @@
+{
+  "name": "@code3-team/orchestration",
+  "version": "1.0.0",
+  "description": "Task3 bounty flow orchestration",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@code3-team/bounty-operator": "workspace:*",
+    "@code3-team/data-operator": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "vitest": "^3.2.0"
+  },
+  "keywords": ["bounty", "orchestration", "workflow"],
+  "author": "Code3 Team",
+  "license": "MIT"
+}
