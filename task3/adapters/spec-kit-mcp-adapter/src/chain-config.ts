@@ -17,7 +17,7 @@ export interface ChainConfig {
 export const ETHEREUM_CONFIGS: Record<string, ChainConfig> = {
   sepolia: {
     rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
-    contractAddress: '0xEBC00BFd6280CA185C8869a79c8d6B329f9aCba4', // Deployed 2025-10-20 (no cooling period)
+    contractAddress: '0x8A0f158B6568BCf1F488fd4e4D7835686FE5a292', // Deployed 2025-10-20 (with taskUrl field)
     network: 'sepolia'
   }
 };
