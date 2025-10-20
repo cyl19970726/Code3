@@ -49,8 +49,8 @@ export class EthereumBountyOperator implements BountyOperator {
   // BountyManager ABI (minimal - only functions we need)
   private static readonly ABI = [
     // Write functions
-    'function createBounty(string memory taskId, bytes32 taskHash) external payable returns (uint256)',
-    'function createBountyWithToken(string memory taskId, bytes32 taskHash, address asset, uint256 amount) external returns (uint256)',
+    'function createBounty(string memory taskId, string memory taskUrl, bytes32 taskHash) external payable returns (uint256)',
+    'function createBountyWithToken(string memory taskId, string memory taskUrl, bytes32 taskHash, address asset, uint256 amount) external returns (uint256)',
     'function acceptBounty(uint256 bountyId, address worker) external',
     'function submitBounty(uint256 bountyId, string memory submissionUrl) external',
     'function confirmBounty(uint256 bountyId, uint256 confirmedAt) external',
@@ -58,7 +58,7 @@ export class EthereumBountyOperator implements BountyOperator {
     'function cancelBounty(uint256 bountyId) external',
 
     // Read functions
-    'function getBounty(uint256 bountyId) external view returns (tuple(uint256 bountyId, string taskId, bytes32 taskHash, address requester, address worker, uint256 amount, address asset, uint8 status, uint256 createdAt, uint256 acceptedAt, uint256 submittedAt, string submissionUrl, uint256 confirmedAt, uint256 claimedAt))',
+    'function getBounty(uint256 bountyId) external view returns (tuple(uint256 bountyId, string taskId, string taskUrl, bytes32 taskHash, address requester, address worker, uint256 amount, address asset, uint8 status, uint256 createdAt, uint256 acceptedAt, uint256 submittedAt, string submissionUrl, uint256 confirmedAt, uint256 claimedAt))',
     'function getBountyByTaskHash(bytes32 taskHash) external view returns (bool exists, uint256 bountyId)',
     'function getBountiesByRequester(address requester) external view returns (uint256[] memory)',
     'function getBountiesByWorker(address worker) external view returns (uint256[] memory)',
@@ -66,7 +66,7 @@ export class EthereumBountyOperator implements BountyOperator {
     'function listBounties(uint256 offset, uint256 limit) external view returns (uint256[] memory)',
 
     // Events
-    'event BountyCreated(uint256 indexed bountyId, string taskId, bytes32 taskHash, address indexed requester, uint256 amount, address asset)',
+    'event BountyCreated(uint256 indexed bountyId, string taskId, string taskUrl, bytes32 taskHash, address indexed requester, uint256 amount, address asset)',
     'event BountyAccepted(uint256 indexed bountyId, address indexed worker, uint256 acceptedAt)',
     'event BountySubmitted(uint256 indexed bountyId, string submissionUrl, uint256 submittedAt)',
     'event BountyConfirmed(uint256 indexed bountyId, uint256 confirmedAt)',
@@ -90,7 +90,7 @@ export class EthereumBountyOperator implements BountyOperator {
     let tx;
     if (params.asset === 'ETH' || params.asset === 'eth') {
       // Native ETH transfer
-      tx = await this.contract.createBounty(params.taskId, taskHash, {
+      tx = await this.contract.createBounty(params.taskId, params.taskUrl, taskHash, {
         value: amount,
         ...this.getGasOptions()
       });
@@ -98,6 +98,7 @@ export class EthereumBountyOperator implements BountyOperator {
       // ERC20 token (requires prior approval)
       tx = await this.contract.createBountyWithToken(
         params.taskId,
+        params.taskUrl,
         taskHash,
         params.asset, // Asset address
         amount,
@@ -294,6 +295,7 @@ Tx Hash: ${receipt.hash}`);
     return {
       bountyId: data.bountyId.toString(),
       taskId: data.taskId,
+      taskUrl: data.taskUrl,
       taskHash: data.taskHash,
       sponsor: data.requester,
       worker: data.worker === ethers.ZeroAddress ? null : data.worker,

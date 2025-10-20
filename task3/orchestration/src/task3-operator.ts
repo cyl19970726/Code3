@@ -98,6 +98,7 @@ export abstract class Task3Operator {
     // 4. Create on-chain bounty
     const bountyResult = await bountyOperator.createBounty({
       taskId: uploadResult.taskId,
+      taskUrl: uploadResult.taskUrl,
       taskHash,
       amount,
       asset

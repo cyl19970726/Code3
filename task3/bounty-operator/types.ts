@@ -12,6 +12,7 @@
 export interface Bounty {
   bountyId: string;
   taskId: string;
+  taskUrl: string; // GitHub Issue URL (or other task URL)
   taskHash: string; // Task content hash (for idempotency)
   sponsor: string; // Sponsor address
   worker: string | null; // Worker address (null if not accepted)
@@ -41,6 +42,7 @@ export enum BountyStatus {
 
 export interface CreateBountyParams {
   taskId: string;
+  taskUrl: string; // GitHub Issue URL (required)
   taskHash: string;
   amount: string;
   asset: string;

@@ -96,6 +96,7 @@ describe('EthereumBountyOperator', () => {
 
       const result = await operator.createBounty({
         taskId: 'test-task-001',
+        taskUrl: 'https://github.com/test-org/test-repo/issues/1',
         taskHash: '0x123abc',
         amount: '1000000000000000000',
         asset: 'ETH'
@@ -206,6 +207,7 @@ describe('EthereumBountyOperator', () => {
       const mockBountyData = {
         bountyId: BigInt(1),
         taskId: 'test-task-001',
+        taskUrl: 'https://github.com/test-org/test-repo/issues/1',
         taskHash: '0x123abc',
         requester: '0x1234567890123456789012345678901234567890',
         worker: '0x0987654321098765432109876543210987654321',
@@ -227,6 +229,7 @@ describe('EthereumBountyOperator', () => {
 
       expect(result.bountyId).toBe('1');
       expect(result.taskId).toBe('test-task-001');
+      expect(result.taskUrl).toBe('https://github.com/test-org/test-repo/issues/1');
       expect(result.status).toBe(BountyStatus.Accepted);
       expect(result.sponsor).toBe('0x1234567890123456789012345678901234567890');
       expect(result.worker).toBe('0x0987654321098765432109876543210987654321');
