@@ -33,7 +33,7 @@ const config = {
   aptosPrivateKey: process.env.APTOS_PRIVATE_KEY,
   ethereumPrivateKey: process.env.ETHEREUM_PRIVATE_KEY,
   localSpecsDir: process.env.LOCAL_SPECS_DIR || './specs',
-  repo: process.env.GITHUB_REPO || ''
+  defaultRepo: process.env.GITHUB_REPO || '' // Optional: default repo for all operations
 };
 
 // System-level configurations (RPC URLs, contract addresses) are in chain-config.ts
@@ -48,10 +48,8 @@ if (!config.githubToken) {
 // Note: Either APTOS_PRIVATE_KEY or ETHEREUM_PRIVATE_KEY must be set (depending on which chain you use)
 // We don't enforce both, as users may only use one chain
 
-if (!config.repo) {
-  console.error('Error: GITHUB_REPO environment variable is required (format: "owner/repo")');
-  process.exit(1);
-}
+// Note: GITHUB_REPO is optional - can be specified per-tool-call via 'repo' parameter
+// If not set in env and not provided in tool call, tool will error with helpful message
 
 // 2. Create MCP Server
 const server = new Server(
@@ -83,35 +81,50 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // 4. Register CallToolRequest handler
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
+    const args = request.params.arguments as any;
+
+    // Helper: Get repo (from args or default config)
+    const getRepo = () => {
+      const repo = args.repo || config.defaultRepo;
+      if (!repo) {
+        throw new Error(
+          'Repository not specified. Either:\n' +
+          '1. Set GITHUB_REPO environment variable, OR\n' +
+          '2. Pass "repo" parameter (format: "owner/repo") in tool call'
+        );
+      }
+      return repo;
+    };
+
     switch (request.params.name) {
       case 'guide':
-        return await guide(request.params.arguments as any);
+        return await guide(args);
 
       case 'publish-bounty':
-        return await publishBounty(request.params.arguments as any, config as any);
+        return await publishBounty(args, config as any);
 
       case 'accept-bounty':
-        return await acceptBounty(request.params.arguments as any, {
+        return await acceptBounty(args, {
           ...config as any,
-          repo: config.repo
+          repo: getRepo()
         });
 
       case 'submit-bounty':
-        return await submitBounty(request.params.arguments as any, {
+        return await submitBounty(args, {
           ...config as any,
-          repo: config.repo
+          repo: getRepo()
         });
 
       case 'confirm-bounty':
-        return await confirmBounty(request.params.arguments as any, {
+        return await confirmBounty(args, {
           ...config as any,
-          repo: config.repo
+          repo: getRepo()
         });
 
       case 'claim-bounty':
-        return await claimBounty(request.params.arguments as any, {
+        return await claimBounty(args, {
           ...config as any,
-          repo: config.repo
+          repo: getRepo()
         });
 
       default:
@@ -136,7 +149,7 @@ async function main() {
 
   console.error('spec-kit-mcp-adapter server running on stdio');
   console.error('\nUser Configuration:');
-  console.error(`  - GitHub Repo: ${config.repo}`);
+  console.error(`  - GitHub Repo (default): ${config.defaultRepo || 'NOT SET (will require per-call)'}`);
   console.error(`  - Local Specs Dir: ${config.localSpecsDir}`);
   console.error(`  - GitHub Token: ${config.githubToken ? '***' : 'NOT SET'}`);
   console.error(`  - Aptos Private Key: ${config.aptosPrivateKey ? '***' : 'NOT SET'}`);
