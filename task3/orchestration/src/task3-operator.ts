@@ -150,15 +150,21 @@ export abstract class Task3Operator {
       );
     }
 
-    // 3. Download task data to local
-    const downloadResult = await dataOperator.downloadTaskData({ taskUrl });
+    // 3. Download task data to local (DISABLED - Worker should read from repository)
+    // Worker should clone the repository and read spec from repository.specPath instead
+    // const downloadResult = await dataOperator.downloadTaskData({ taskUrl });
 
     // 4. Accept bounty on-chain
     const acceptResult = await bountyOperator.acceptBounty({ bountyId });
 
+    // Generate placeholder localPath based on repository metadata
+    const localPath = metadata.repository?.specPath
+      ? `Repository: ${metadata.repository.specPath}`
+      : 'N/A - Read from cloned repository';
+
     return {
-      taskData: downloadResult.taskData,
-      localPath: downloadResult.localPath,
+      taskData: { content: '' }, // Empty - Worker reads from repository
+      localPath,
       bountyId,
       txHash: acceptResult.txHash
     };

@@ -94,7 +94,9 @@ export async function acceptBounty(
     if (repository) {
       const repoName = repository.url.split('/').pop()?.replace('.git', '') || 'repo';
 
-      repoInstructions = `\n\n📦 Repository Setup Instructions:
+      repoInstructions = `
+
+📦 Repository Setup Instructions:
 
 \`\`\`bash
 # Clone the repository with source branch
@@ -103,18 +105,27 @@ cd ${repoName}
 
 # Create your worker branch
 git checkout -b ${workerBranchName}
+
+# Read the spec file
+cat ${repository.specPath}
 \`\`\`
 
 📁 Source branch: ${repository.sourceBranch}
-📄 Spec file: ${repoName}/${repository.specPath}
+📄 Spec file: ${repository.specPath}
 
 💡 Next steps:
-   1. Read the spec file at ${repository.specPath}
+   1. Read and understand the spec at ${repository.specPath}
    2. Implement the feature on branch: ${workerBranchName}
    3. Commit and push your changes:
       \`git push origin ${workerBranchName}\`
    4. Submit your work:
       \`submit-bounty --issueUrl ${args.issueUrl} --branchName ${workerBranchName}\`
+`;
+    } else {
+      repoInstructions = `
+
+⚠️  Repository metadata not available.
+   Please check the GitHub Issue for spec details: ${args.issueUrl}
 `;
     }
 
@@ -122,9 +133,9 @@ git checkout -b ${workerBranchName}
     const message = `✅ Bounty accepted successfully!
 
 - Bounty ID: ${result.bountyId}
-- Local path: ${result.localPath}
 - Tx Hash: ${result.txHash}
-- Chain: ${args.chain} (${chainConfig.network})${repoInstructions}`;
+- Chain: ${args.chain} (${chainConfig.network})
+${repoInstructions}`;
 
     return {
       content: [{ type: 'text', text: message }]
