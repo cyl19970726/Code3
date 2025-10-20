@@ -16,7 +16,6 @@ export interface Bounty {
   submittedAt?: number;
   confirmedAt?: number;
   claimedAt?: number;
-  coolingUntil?: number;
   submissionUrl?: string;
   // GitHub enrichment
   title?: string;

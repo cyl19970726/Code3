@@ -61,7 +61,6 @@ export interface Bounty {
   acceptedAt: number | null;     // 接受时间（null 表示未接受）
   submittedAt: number | null;    // 提交时间（worker 提交工作成果）
   confirmedAt: number | null;    // 确认时间（requester 确认工作成果）
-  coolingUntil: number | null;   // 冷静期结束时间（confirmedAt + 7天）
   claimedAt: number | null;      // 领取时间（worker 领取赏金）
 }
 ```
@@ -81,7 +80,6 @@ export interface Bounty {
 | `createdAt` | number | ✅ | 创建时的 Unix 时间戳 |
 | `submittedAt` | number \| null | ❌ | worker 提交工作成果的时间 |
 | `confirmedAt` | number \| null | ❌ | requester 确认工作成果的时间 |
-| `coolingUntil` | number \| null | ❌ | 冷静期结束时间（确认后 7 天） |
 | `claimedAt` | number \| null | ❌ | worker 领取赏金的时间 |
 
 ---
@@ -108,7 +106,7 @@ export enum BountyStatus {
 | **Open** | 赏金已创建，等待接单 | acceptBounty, cancelBounty | Accepted, Cancelled |
 | **Accepted** | worker 已接单，开始工作 | submitBounty | Submitted |
 | **Submitted** | worker 已提交工作成果 | confirmBounty | Confirmed |
-| **Confirmed** | requester 已确认，冷静期中 | claimPayout（冷静期后） | Claimed |
+| **Confirmed** | requester 已确认，可领取 | claimPayout | Claimed |
 | **Claimed** | worker 已领取赏金 | - | 终态 |
 | **Cancelled** | user 已取消赏金 | - | 终态 |
 
@@ -123,7 +121,7 @@ stateDiagram-v2
     Open --> Cancelled: cancelBounty()
     Accepted --> Submitted: submitBounty()
     Submitted --> Confirmed: confirmBounty()
-    Confirmed --> Claimed: claimPayout()
+    Confirmed --> Claimed: claimBounty()
     Claimed --> [*]
     Cancelled --> [*]
 
@@ -131,40 +129,70 @@ stateDiagram-v2
         user 可取消
     end note
 
-    note right of Confirmed
-        进入冷静期（7天）
-        防止即时撤回
-    end note
 ```
 
 **状态转换规则**:
 
-1. **Open → Accepted**
-   - 触发者：requester（将任务分配给 worker）
-   - 前置条件：赏金状态为 Open
-   - 后置条件：worker 字段被设置
+1. **[*] → Open** (`createBounty`)
+   - **触发者**: User (requester)
+   - **前置条件**: 无（初始状态）
+   - **链上操作**: 锁定赏金金额到合约
+   - **后置条件**:
+     - 赏金状态为 `Open`
+     - `bountyId` 被创建
+     - `createdAt` 被记录
+     - 资金已锁定在合约中
 
-2. **Accepted → Submitted**
-   - 触发者：worker（提交工作成果）
-   - 前置条件：赏金状态为 Accepted
-   - 后置条件：submittedAt 被记录
+2. **Open → Accepted** (`acceptBounty`)
+   - **触发者**: Worker（接受任务）
+   - **前置条件**: 赏金状态为 `Open`
+   - **链上操作**: 将 worker 地址绑定到 bounty
+   - **后置条件**:
+     - 赏金状态为 `Accepted`
+     - `worker` 字段被设置
+     - `acceptedAt` 被记录
 
-3. **Submitted → Confirmed**
-   - 触发者：requester（确认工作成果）
-   - 前置条件：赏金状态为 Submitted
-   - 后置条件：confirmedAt 和 coolingUntil 被记录
+3. **Accepted → Submitted** (`submitBounty`)
+   - **触发者**: Worker（提交工作成果）
+   - **前置条件**:
+     - 赏金状态为 `Accepted`
+     - 调用者必须是该 bounty 的 worker
+   - **链上操作**: 记录提交的 PR URL（或其他提交凭证）
+   - **后置条件**:
+     - 赏金状态为 `Submitted`
+     - `submittedAt` 被记录
+     - 提交 URL 已上链
 
-4. **Confirmed → Claimed**
-   - 触发者：worker（领取赏金）
-   - 前置条件：
-     - 赏金状态为 Confirmed
-     - 当前时间 >= coolingUntil（冷静期结束）
-   - 后置条件：claimedAt 被记录，资金转账给 worker
+4. **Submitted → Confirmed** (`confirmBounty`)
+   - **触发者**: User (requester)（确认工作成果）
+   - **前置条件**:
+     - 赏金状态为 `Submitted`
+     - 调用者必须是该 bounty 的 user（原始发起人）
+   - **链上操作**: 确认工作成果
+   - **后置条件**:
+     - 赏金状态为 `Confirmed`
+     - `confirmedAt` 被记录
 
-5. **Open → Cancelled**
-   - 触发者：user（取消赏金）
-   - 前置条件：赏金状态为 Open（仅未接单的赏金可取消）
-   - 后置条件：资金退还给 user
+5. **Confirmed → Claimed** (`claimBounty`)
+   - **触发者**: Worker（领取赏金）
+   - **前置条件**:
+     - 赏金状态为 `Confirmed`
+     - 调用者必须是该 bounty 的 worker
+   - **链上操作**: 将锁定的资金转账给 worker
+   - **后置条件**:
+     - 赏金状态为 `Claimed`
+     - `claimedAt` 被记录
+     - 资金已转账给 worker
+
+6. **Open → Cancelled** (`cancelBounty`)
+   - **触发者**: User (requester)（取消赏金）
+   - **前置条件**:
+     - 赏金状态为 `Open`（仅未接单的赏金可取消）
+     - 调用者必须是该 bounty 的 user
+   - **链上操作**: 退还锁定的资金给 user
+   - **后置条件**:
+     - 赏金状态为 `Cancelled`
+     - 资金已退还给 user
 
 ---
 
@@ -203,7 +231,6 @@ export interface TaskMetadata {
     asset: string;               // 资产类型
     amount: string;              // 赏金金额
     confirmedAt: number | null;  // requester 确认时间
-    coolingUntil: number | null; // 冷静期结束时间
   };
 
   // ========== 数据层信息 ==========
@@ -231,7 +258,6 @@ export interface TaskMetadata {
 | `bounty.asset` | string | ✅ | 赏金资产类型 |
 | `bounty.amount` | string | ✅ | 赏金金额 |
 | `bounty.confirmedAt` | number \| null | ❌ | 确认时间（确认后才有） |
-| `bounty.coolingUntil` | number \| null | ❌ | 冷静期结束时间 |
 | `dataLayer.type` | string | ✅ | 数据层类型 |
 | `dataLayer.url` | string | ✅ | 任务数据的 URL（taskUrl） |
 
@@ -256,8 +282,7 @@ export interface TaskMetadata {
   "bounty": {
     "asset": "USDT",
     "amount": "100.00",
-    "confirmedAt": 1696550400,
-    "coolingUntil": 1697155200
+    "confirmedAt": 1696550400
   },
   "dataLayer": {
     "type": "github",
@@ -423,12 +448,10 @@ export interface SubmitBountyResult {
 ```typescript
 export interface ConfirmBountyParams {
   bountyId: string;                // Bounty ID
-  confirmedAt: number;             // 确认时间戳
 }
 
 export interface ConfirmBountyResult {
   txHash: string;                  // 交易哈希
-  coolingUntil: number;            // 冷静期结束时间戳
 }
 ```
 
@@ -614,66 +637,9 @@ export interface UpdateTaskMetadataResult {
 
 ---
 
-## 7. 冷静期机制
+## 7. 幂等性机制
 
-### 7.1 冷静期定义
-
-**目的**: 防止 requester 在确认工作成果后立即撤回，给社区/仲裁者留出审查时间。
-
-**规则**:
-- **触发时机**: requester 调用 `confirmBounty` 确认工作成果后
-- **持续时间**: 7 天（可配置）
-- **计算方式**: `coolingUntil = confirmedAt + 7 days`
-- **限制**: worker 必须等待到 `coolingUntil` 时间后才能领取赏金
-
----
-
-### 7.2 冷静期字段
-
-```typescript
-interface Bounty {
-  confirmedAt: number | null;      // requester 确认时间（Unix 时间戳，秒）
-  coolingUntil: number | null;     // 冷静期结束时间（confirmedAt + 7天）
-  claimedAt: number | null;        // worker 领取赏金时间
-}
-```
-
-**状态转换**:
-```
-Submitted → Confirmed (confirmedAt 被记录，coolingUntil = confirmedAt + 7天)
-          ↓
-      冷静期（7天）
-          ↓
-Confirmed → Claimed (当前时间 >= coolingUntil 时可领取)
-```
-
----
-
-### 7.3 验证逻辑
-
-```typescript
-// 在 claimFlow 中验证冷静期
-const bounty = await bountyOperator.getBounty({ bountyId });
-
-if (bounty.status !== BountyStatus.Confirmed) {
-  throw new Error(`Bounty is not Confirmed (current: ${bounty.status})`);
-}
-
-const now = Math.floor(Date.now() / 1000);
-if (bounty.coolingUntil && now < bounty.coolingUntil) {
-  const remainingSeconds = bounty.coolingUntil - now;
-  throw new Error(`Cooling period not ended (${remainingSeconds}s remaining)`);
-}
-
-// 验证通过，允许领取
-const claimResult = await bountyOperator.claimPayout({ bountyId });
-```
-
----
-
-## 8. 幂等性机制
-
-### 8.1 幂等性定义
+### 7.1 幂等性定义
 
 **目的**: 防止重复创建相同的 bounty（如用户误操作、网络重试等）。
 
@@ -685,7 +651,7 @@ const claimResult = await bountyOperator.claimPayout({ bountyId });
 
 ---
 
-### 8.2 幂等性字段
+### 7.2 幂等性字段
 
 ```typescript
 interface Bounty {
@@ -700,7 +666,7 @@ interface PublishFlowResult {
 
 ---
 
-### 8.3 幂等性逻辑
+### 7.3 幂等性逻辑
 
 ```typescript
 // 在 publishFlow 中实现幂等性
@@ -724,7 +690,7 @@ const bountyResult = await bountyOperator.createBounty({ taskId, taskHash, amoun
 
 ---
 
-## 9. 参考
+## 8. 参考
 
 - **接口定义**: [02-interfaces.md](./02-interfaces.md)
 - **ADR-012**: [TRUTH.md](../../TRUTH.md) ADR-012

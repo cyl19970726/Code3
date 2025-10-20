@@ -22,7 +22,6 @@ export interface Bounty {
   acceptedAt: number | null;
   submittedAt: number | null; // Worker submitted work
   confirmedAt: number | null; // Requester confirmed work
-  coolingUntil: number | null; // Cooling period end timestamp
   claimedAt: number | null;
 }
 
@@ -33,7 +32,7 @@ export enum BountyStatus {
   Open = 'Open', // Published, waiting for worker
   Accepted = 'Accepted', // Accepted by worker, work in progress
   Submitted = 'Submitted', // Worker submitted work
-  Confirmed = 'Confirmed', // Requester confirmed, entered cooling period
+  Confirmed = 'Confirmed', // Requester confirmed, ready for claim
   Claimed = 'Claimed', // Worker claimed the payout
   Cancelled = 'Cancelled' // Sponsor cancelled (only when Open)
 }
@@ -77,7 +76,6 @@ export interface ConfirmBountyParams {
 export interface ConfirmBountyResult {
   txHash: string;
   confirmedAt: number;
-  coolingUntil: number; // Cooling period end timestamp
 }
 
 export interface ClaimPayoutParams {

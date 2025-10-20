@@ -3,7 +3,7 @@ import { Bounty, BountyStatus } from './types';
 
 // ABI for BountyManager contract (read-only functions)
 const BOUNTY_MANAGER_ABI = [
-  'function getBounty(uint256 bountyId) view returns (tuple(uint256 bountyId, string taskId, bytes32 taskHash, address requester, address worker, uint256 amount, address asset, uint8 status, uint256 createdAt, uint256 acceptedAt, uint256 submittedAt, string submissionUrl, uint256 confirmedAt, uint256 coolingUntil, uint256 claimedAt))',
+  'function getBounty(uint256 bountyId) view returns (tuple(uint256 bountyId, string taskId, bytes32 taskHash, address requester, address worker, uint256 amount, address asset, uint8 status, uint256 createdAt, uint256 acceptedAt, uint256 submittedAt, string submissionUrl, uint256 confirmedAt, uint256 claimedAt))',
   'function listBounties(uint256 offset, uint256 limit) view returns (uint256[])',
   'function getBountiesByRequester(address requester) view returns (uint256[])',
   'function getBountiesByWorker(address worker) view returns (uint256[])',
@@ -94,7 +94,6 @@ export class EthereumOperator {
         submittedAt,
         submissionUrl,
         confirmedAt,
-        coolingUntil,
         claimedAt,
       ] = resultArray;
 
@@ -116,7 +115,6 @@ export class EthereumOperator {
         submittedAt: Number(submittedAt) > 0 ? Number(submittedAt) * 1000 : undefined,
         confirmedAt: Number(confirmedAt) > 0 ? Number(confirmedAt) * 1000 : undefined,
         claimedAt: Number(claimedAt) > 0 ? Number(claimedAt) * 1000 : undefined,
-        coolingUntil: Number(coolingUntil) > 0 ? Number(coolingUntil) * 1000 : undefined,
         submissionUrl: String(submissionUrl) || undefined,
       };
     } catch (error) {

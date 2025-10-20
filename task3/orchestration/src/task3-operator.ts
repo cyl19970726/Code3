@@ -31,6 +31,21 @@ import type {
 
 export abstract class Task3Operator {
   /**
+   * Helper: Convert taskId to GitHub Issue URL
+   * @param taskId - Format: "owner/repo#123"
+   * @returns GitHub Issue URL: "https://github.com/owner/repo/issues/123"
+   */
+  private taskIdToUrl(taskId: string): string {
+    // taskId format: "owner/repo#123"
+    const match = taskId.match(/^(.+?)#(\d+)$/);
+    if (!match) {
+      throw new Error(`Invalid taskId format: ${taskId}`);
+    }
+    const [, repoPath, issueNumber] = match;
+    return `https://github.com/${repoPath}/issues/${issueNumber}`;
+  }
+
+  /**
    * publishFlow: Publish a bounty with idempotency check
    *
    * Flow:
@@ -55,13 +70,14 @@ export abstract class Task3Operator {
     // 2. Check if bounty already exists (idempotency)
     const existingBounty = await bountyOperator.getBountyByTaskHash({ taskHash });
     if (existingBounty.found && existingBounty.bountyId) {
-      // Bounty already exists, return existing info
-      const taskMetadata = await dataOperator.getTaskMetadata({
-        taskUrl: metadata.dataLayer!.url
-      });
+      // Bounty already exists, get full details to retrieve taskId
+      const bounty = await bountyOperator.getBounty({ bountyId: existingBounty.bountyId });
+
+      // Convert taskId to taskUrl
+      const taskUrl = this.taskIdToUrl(bounty.taskId);
 
       return {
-        taskUrl: taskMetadata.dataLayer.url,
+        taskUrl,
         bountyId: existingBounty.bountyId,
         txHash: null, // No new transaction
         isNew: false
@@ -213,11 +229,11 @@ export abstract class Task3Operator {
    * Flow:
    * 1. Get task metadata
    * 2. Validate bounty status (must be Submitted)
-   * 3. Confirm bounty on-chain (enters cooling period)
-   * 4. Update task metadata (write back confirmedAt and coolingUntil)
+   * 3. Confirm bounty on-chain
+   * 4. Update task metadata (write back confirmedAt)
    *
    * @param params - Flow parameters
-   * @returns txHash, confirmedAt, coolingUntil
+   * @returns txHash, confirmedAt
    */
   async confirmFlow(params: ConfirmFlowParams): Promise<ConfirmFlowResult> {
     const { dataOperator, bountyOperator, taskUrl } = params;
@@ -234,40 +250,37 @@ export abstract class Task3Operator {
       );
     }
 
-    // 3. Confirm bounty on-chain (enters cooling period)
+    // 3. Confirm bounty on-chain
     const confirmedAt = Math.floor(Date.now() / 1000);
     const confirmResult = await bountyOperator.confirmBounty({
       bountyId,
       confirmedAt
     });
 
-    // 4. Update task metadata (write back confirmedAt and coolingUntil)
+    // 4. Update task metadata (write back confirmedAt)
     await dataOperator.updateTaskMetadata({
       taskUrl,
       metadata: {
         bounty: {
           ...metadata.bounty,
-          confirmedAt: confirmResult.confirmedAt,
-          coolingUntil: confirmResult.coolingUntil
+          confirmedAt: confirmResult.confirmedAt
         }
       }
     });
 
     return {
       txHash: confirmResult.txHash,
-      confirmedAt: confirmResult.confirmedAt,
-      coolingUntil: confirmResult.coolingUntil
+      confirmedAt: confirmResult.confirmedAt
     };
   }
 
   /**
-   * claimFlow: Claim payout (worker claims after cooling period)
+   * claimFlow: Claim payout (worker claims)
    *
    * Flow:
    * 1. Get task metadata
    * 2. Validate bounty status (must be Confirmed)
-   * 3. Validate cooling period has ended
-   * 4. Claim payout on-chain
+   * 3. Claim payout on-chain
    *
    * @param params - Flow parameters
    * @returns txHash, amount, asset
@@ -287,16 +300,7 @@ export abstract class Task3Operator {
       );
     }
 
-    // 3. Validate cooling period has ended
-    const now = Math.floor(Date.now() / 1000);
-    if (bounty.coolingUntil && now < bounty.coolingUntil) {
-      const remaining = bounty.coolingUntil - now;
-      throw new Error(
-        `Cooling period not ended yet: ${remaining}s remaining (ends at ${bounty.coolingUntil})`
-      );
-    }
-
-    // 4. Claim payout on-chain
+    // 3. Claim payout on-chain
     const claimResult = await bountyOperator.claimPayout({ bountyId });
 
     return {

@@ -30,8 +30,7 @@ class MockBountyOperator implements BountyOperator {
       asset: params.asset,
       worker: null,
       acceptedAt: null,
-      confirmedAt: null,
-      coolingUntil: null
+      confirmedAt: null
     });
     this.taskHashMap.set(params.taskHash, bountyId);
     return { bountyId, txHash: 'tx-create' };
@@ -69,13 +68,11 @@ class MockBountyOperator implements BountyOperator {
   async confirmBounty(params: any) {
     const bounty = this.bounties.get(params.bountyId);
     const confirmedAt = Math.floor(Date.now() / 1000);
-    const coolingUntil = confirmedAt + 7 * 24 * 60 * 60;
     if (bounty) {
       bounty.status = 'Confirmed';
       bounty.confirmedAt = confirmedAt;
-      bounty.coolingUntil = coolingUntil;
     }
-    return { txHash: 'tx-confirm', confirmedAt, coolingUntil };
+    return { txHash: 'tx-confirm', confirmedAt };
   }
 
   async claimPayout(params: any) {
@@ -177,7 +174,7 @@ describe('Task3Operator - publishFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -201,7 +198,7 @@ describe('Task3Operator - publishFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -233,7 +230,7 @@ describe('Task3Operator - publishFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -268,7 +265,7 @@ describe('Task3Operator - acceptFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -303,7 +300,7 @@ describe('Task3Operator - acceptFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -344,7 +341,7 @@ describe('Task3Operator - submitFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -382,7 +379,7 @@ describe('Task3Operator - submitFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -431,7 +428,7 @@ describe('Task3Operator - confirmFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -459,26 +456,24 @@ describe('Task3Operator - confirmFlow', () => {
 
     expect(result.txHash).toBe('tx-confirm');
     expect(result.confirmedAt).toBeGreaterThan(0);
-    expect(result.coolingUntil).toBeGreaterThan(result.confirmedAt);
 
     // Verify bounty status updated
     const bounty = await bountyOperator.getBounty({ bountyId: publishResult.bountyId });
     expect(bounty.status).toBe('Confirmed');
-    expect(bounty.coolingUntil).toBe(result.coolingUntil);
   });
 
-  it('should update metadata with confirmedAt and coolingUntil', async () => {
+  it('should update metadata with confirmedAt', async () => {
     const publishResult = await operator.publishFlow({
       dataOperator,
       bountyOperator,
-      taskData: { title: 'Cooling Period Test' },
+      taskData: { title: 'Confirm Metadata Test' },
       metadata: {
         schema: 'code3/v2' as const,
         taskId: '',
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -501,7 +496,6 @@ describe('Task3Operator - confirmFlow', () => {
 
     const metadata = await dataOperator.getTaskMetadata({ taskUrl: publishResult.taskUrl });
     expect(metadata.bounty.confirmedAt).toBe(confirmResult.confirmedAt);
-    expect(metadata.bounty.coolingUntil).toBe(confirmResult.coolingUntil);
   });
 });
 
@@ -516,7 +510,7 @@ describe('Task3Operator - claimFlow', () => {
     dataOperator = new MockDataOperator();
   });
 
-  it('should claim payout after cooling period ends', async () => {
+  it('should claim payout after confirmation', async () => {
     // Setup: Full flow
     const publishResult = await operator.publishFlow({
       dataOperator,
@@ -528,7 +522,7 @@ describe('Task3Operator - claimFlow', () => {
         taskHash: '',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       },
       amount: '100',
@@ -561,42 +555,5 @@ describe('Task3Operator - claimFlow', () => {
     // Verify bounty status updated
     const finalBounty = await bountyOperator.getBounty({ bountyId: publishResult.bountyId });
     expect(finalBounty.status).toBe('Completed');
-  });
-
-  it('should reject claim before cooling period ends', async () => {
-    const publishResult = await operator.publishFlow({
-      dataOperator,
-      bountyOperator,
-      taskData: { title: 'Early Claim Test' },
-      metadata: {
-        schema: 'code3/v2' as const,
-        taskId: '',
-        taskHash: '',
-        chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
-        workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
-        dataLayer: { type: 'github', url: '' }
-      },
-      amount: '100',
-      asset: 'APT'
-    });
-
-    await operator.acceptFlow({ dataOperator, bountyOperator, taskUrl: publishResult.taskUrl });
-    await operator.submitFlow({
-      dataOperator,
-      bountyOperator,
-      taskUrl: publishResult.taskUrl,
-      submissionData: { prUrl: 'https://github.com/test/repo/pull/1' }
-    });
-    await operator.confirmFlow({ dataOperator, bountyOperator, taskUrl: publishResult.taskUrl });
-
-    // Don't simulate cooling period ended - should fail
-    await expect(
-      operator.claimFlow({
-        dataOperator,
-        bountyOperator,
-        taskUrl: publishResult.taskUrl
-      })
-    ).rejects.toThrow(/Cooling period not ended/);
   });
 });

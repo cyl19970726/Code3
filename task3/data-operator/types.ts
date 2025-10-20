@@ -72,7 +72,6 @@ export interface TaskMetadata {
     asset: string;
     amount: string;
     confirmedAt: number | null; // Requester confirmation timestamp
-    coolingUntil: number | null; // Cooling period end timestamp
   };
   dataLayer: {
     type: string; // github/ipfs/arweave/s3

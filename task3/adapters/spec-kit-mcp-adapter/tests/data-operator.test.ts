@@ -58,8 +58,7 @@ describe('SpecKitDataOperator', () => {
     bounty: {
       asset: 'APT',
       amount: '100000000',
-      confirmedAt: null,
-      coolingUntil: null
+      confirmedAt: null
     },
     dataLayer: {
       type: 'github',
@@ -361,8 +360,7 @@ describe('SpecKitDataOperator', () => {
         bounty: {
           asset: 'APT',
           amount: '100000000',
-          confirmedAt: '2025-10-13T12:00:00Z',
-          coolingUntil: '2025-10-20T12:00:00Z'
+          confirmedAt: '2025-10-13T12:00:00Z'
         }
       };
 

@@ -13,7 +13,7 @@
  *
  * Cleanup:
  * - Tests create real transactions on Sepolia testnet
- * - Test ETH will be locked in bounties during cooling period
+ * - Test ETH will be locked in bounties until claimed
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -189,13 +189,10 @@ describe.only('E2E: Ethereum Bounty Complete Flow', () => {
     // Then
     expect(result).toHaveProperty('txHash');
     expect(result).toHaveProperty('confirmedAt');
-    expect(result).toHaveProperty('coolingUntil');
     expect(result.txHash).toMatch(/^0x[a-fA-F0-9]{64}$/);
-    expect(result.coolingUntil).toBeGreaterThan(result.confirmedAt);
 
     console.log(`✅ Work confirmed!`);
     console.log(`   Confirmed at: ${new Date(result.confirmedAt * 1000).toISOString()}`);
-    console.log(`   Cooling until: ${new Date(result.coolingUntil * 1000).toISOString()}`);
     console.log(`   Tx Hash: ${result.txHash}`);
     console.log(`   Sepolia: https://sepolia.etherscan.io/tx/${result.txHash}`);
 
@@ -203,25 +200,25 @@ describe.only('E2E: Ethereum Bounty Complete Flow', () => {
     const bounty = await requesterOperator.getBounty({ bountyId: testBountyId });
     expect(bounty.status).toBe(BountyStatus.Confirmed);
     expect(bounty.confirmedAt).toBe(result.confirmedAt);
-    expect(bounty.coolingUntil).toBe(result.coolingUntil);
-
-    // Calculate remaining cooling time
-    const now = Math.floor(Date.now() / 1000);
-    const remainingSeconds = result.coolingUntil - now;
-    const remainingDays = remainingSeconds / (24 * 60 * 60);
-    console.log(`   ⏳ Cooling period: ${remainingDays.toFixed(2)} days remaining`);
   }, 60000);
 
-  it('Step 6: should fail to claim before cooling period', async () => {
-    console.log('\n⏰ Step 6: Attempting early claim (should fail)...');
+  it('Step 6: should allow immediate claim after confirmation', async () => {
+    console.log('\n💰 Step 6: Worker claiming payout...');
 
-    // When & Then
-    await expect(
-      workerOperator.claimPayout({ bountyId: testBountyId })
-    ).rejects.toThrow();
+    // When
+    const result = await workerOperator.claimPayout({ bountyId: testBountyId });
 
-    console.log(`✅ Early claim blocked as expected!`);
-    console.log(`   ⏳ Must wait 7 days after confirmation`);
+    // Then
+    expect(result).toHaveProperty('txHash');
+    expect(result.txHash).toMatch(/^0x[a-fA-F0-9]{64}$/);
+
+    console.log(`✅ Payout claimed successfully!`);
+    console.log(`   Tx Hash: ${result.txHash}`);
+    console.log(`   Sepolia: https://sepolia.etherscan.io/tx/${result.txHash}`);
+
+    // Verify final status
+    const bounty = await requesterOperator.getBounty({ bountyId: testBountyId });
+    expect(bounty.status).toBe(BountyStatus.Claimed);
   }, 60000);
 
   it('Step 7: should list bounties by requester', async () => {
@@ -255,43 +252,6 @@ describe.only('E2E: Ethereum Bounty Complete Flow', () => {
     console.log(`✅ Found ${result.count} bounties for worker`);
     console.log(`   Bounty IDs: ${result.bountyIds.join(', ')}`);
   }, 30000);
-
-  it('Step 9: should get cooling period', async () => {
-    console.log('\n⏱️  Step 9: Getting cooling period...');
-
-    // When
-    const coolingPeriod = await requesterOperator.getCoolingPeriod();
-
-    // Then
-    expect(coolingPeriod).toBe(604800); // 7 days
-
-    console.log(`✅ Cooling period: ${coolingPeriod} seconds (${coolingPeriod / 86400} days)`);
-  }, 30000);
-
-  // Note: Step 10 (claim after cooling period) cannot be tested in E2E
-  // because it requires waiting 7 days. Manual testing required.
-  it.skip('Step 10: worker should claim payout after cooling period', async () => {
-    console.log('\n💰 Step 10: Worker claiming payout...');
-
-    // Note: This test is skipped because it requires 7 days wait
-    // To test manually:
-    // 1. Wait 7 days after Step 5
-    // 2. Run: await workerOperator.claimPayout({ bountyId: testBountyId })
-
-    const result = await workerOperator.claimPayout({ bountyId: testBountyId });
-
-    expect(result).toHaveProperty('txHash');
-    expect(result.txHash).toMatch(/^0x[a-fA-F0-9]{64}$/);
-
-    console.log(`✅ Payout claimed!`);
-    console.log(`   Tx Hash: ${result.txHash}`);
-    console.log(`   Sepolia: https://sepolia.etherscan.io/tx/${result.txHash}`);
-
-    // Verify bounty state
-    const bounty = await requesterOperator.getBounty({ bountyId: testBountyId });
-    expect(bounty.status).toBe(BountyStatus.Claimed);
-    expect(bounty.claimedAt).toBeGreaterThan(0);
-  }, 60000);
 });
 
 describe.skip('E2E: Ethereum Bounty Cancellation Flow', () => {

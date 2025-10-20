@@ -20,12 +20,8 @@ module code3::bounty {
     const E_INVALID_STATUS: u64 = 2;
     const E_NOT_SPONSOR: u64 = 3;
     const E_NOT_WORKER: u64 = 4;
-    const E_COOLING_PERIOD_NOT_ENDED: u64 = 5;
     const E_BOUNTY_ALREADY_EXISTS: u64 = 6;
     const E_INVALID_AMOUNT: u64 = 7;
-
-    /// Cooling period duration (7 days in seconds)
-    const COOLING_PERIOD: u64 = 604800;
 
     /// Bounty struct
     struct Bounty has store, drop, copy {
@@ -41,7 +37,6 @@ module code3::bounty {
         accepted_at: u64,
         submitted_at: u64,
         confirmed_at: u64,
-        cooling_until: u64,
         claimed_at: u64,
     }
 
@@ -116,7 +111,6 @@ module code3::bounty {
             accepted_at: 0,
             submitted_at: 0,
             confirmed_at: 0,
-            cooling_until: 0,
             claimed_at: 0,
         };
 
@@ -180,7 +174,7 @@ module code3::bounty {
         bounty.submitted_at = timestamp::now_seconds();
     }
 
-    /// Confirm work (requester confirms the submission, enters cooling period)
+    /// Confirm work (requester confirms the submission)
     public entry fun confirm_bounty(
         sponsor: &signer,
         bounty_id: u64,
@@ -197,10 +191,9 @@ module code3::bounty {
 
         bounty.status = STATUS_CONFIRMED;
         bounty.confirmed_at = confirmed_at;
-        bounty.cooling_until = confirmed_at + COOLING_PERIOD;
     }
 
-    /// Claim payout (worker claims the reward after cooling period)
+    /// Claim payout (worker claims the reward)
     public entry fun claim_payout(
         worker: &signer,
         bounty_id: u64,
@@ -214,11 +207,8 @@ module code3::bounty {
         assert!(bounty.status == STATUS_CONFIRMED, E_INVALID_STATUS);
         assert!(bounty.worker == worker_addr, E_NOT_WORKER);
 
-        let now = timestamp::now_seconds();
-        assert!(now >= bounty.cooling_until, E_COOLING_PERIOD_NOT_ENDED);
-
         bounty.status = STATUS_CLAIMED;
-        bounty.claimed_at = now;
+        bounty.claimed_at = timestamp::now_seconds();
 
         // Transfer funds from escrow to worker
         let escrow = borrow_global_mut<BountyEscrow<AptosCoin>>(@code3);

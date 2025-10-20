@@ -63,7 +63,6 @@ describe('EthereumBountyOperator', () => {
     it('should expose helper methods', () => {
       expect(typeof operator.getAddress).toBe('function');
       expect(typeof operator.getContractAddress).toBe('function');
-      expect(typeof operator.getCoolingPeriod).toBe('function');
     });
   });
 
@@ -156,8 +155,7 @@ describe('EthereumBountyOperator', () => {
         name: 'BountyConfirmed',
         args: {
           bountyId: BigInt(1),
-          confirmedAt: BigInt(1697000000),
-          coolingUntil: BigInt(1697604800)
+          confirmedAt: BigInt(1697000000)
         }
       });
 
@@ -168,7 +166,6 @@ describe('EthereumBountyOperator', () => {
 
       expect(result).toHaveProperty('txHash');
       expect(result).toHaveProperty('confirmedAt');
-      expect(result).toHaveProperty('coolingUntil');
     });
 
     it('claimPayout: should claim the payout', async () => {
@@ -220,7 +217,6 @@ describe('EthereumBountyOperator', () => {
         submittedAt: BigInt(0),
         submissionUrl: '',
         confirmedAt: BigInt(0),
-        coolingUntil: BigInt(0),
         claimedAt: BigInt(0)
       };
 
@@ -294,15 +290,6 @@ describe('EthereumBountyOperator', () => {
   });
 
   describe('Helper Methods', () => {
-    it('getCoolingPeriod: should return cooling period', async () => {
-      const mockContract = (operator as any).contract;
-      mockContract.COOLING_PERIOD.mockResolvedValue(BigInt(604800));
-
-      const period = await operator.getCoolingPeriod();
-
-      expect(period).toBe(604800); // 7 days
-    });
-
     it('getAddress: should return wallet address', () => {
       const address = operator.getAddress();
       expect(address).toBe('0x1234567890123456789012345678901234567890');

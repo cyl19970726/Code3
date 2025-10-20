@@ -136,7 +136,7 @@ describe('DataOperator Interface Tests', () => {
         taskHash: 'hash-456',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       };
 
@@ -161,7 +161,7 @@ describe('DataOperator Interface Tests', () => {
         taskHash: 'hash-download',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       };
 
@@ -278,7 +278,7 @@ describe('DataOperator Interface Tests', () => {
         taskHash: 'hash-sequential',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       };
 
@@ -296,16 +296,9 @@ describe('DataOperator Interface Tests', () => {
         metadata: { bounty: { confirmedAt: 1234567890 } }
       });
 
-      // Update 3: Set coolingUntil
-      await operator.updateTaskMetadata({
-        taskUrl: uploadResult.taskUrl,
-        metadata: { bounty: { coolingUntil: 1234567890 + 604800 } }
-      });
-
       const finalMetadata = await operator.getTaskMetadata({ taskUrl: uploadResult.taskUrl });
       expect(finalMetadata.chain.bountyId).toBe('bounty-789');
       expect(finalMetadata.bounty.confirmedAt).toBe(1234567890);
-      expect(finalMetadata.bounty.coolingUntil).toBe(1234567890 + 604800);
     });
 
     it('should support deep merge for nested objects', async () => {
@@ -324,8 +317,7 @@ describe('DataOperator Interface Tests', () => {
         bounty: {
           asset: 'APT',
           amount: '100',
-          confirmedAt: 111,
-          coolingUntil: 222
+          confirmedAt: 111
         },
         dataLayer: { type: 'github', url: '' }
       };
@@ -342,7 +334,7 @@ describe('DataOperator Interface Tests', () => {
           },
           bounty: {
             confirmedAt: 999
-            // asset, amount, coolingUntil should be preserved
+            // asset, amount should be preserved
           }
         }
       });
@@ -353,7 +345,6 @@ describe('DataOperator Interface Tests', () => {
       expect(finalMetadata.chain.network).toBe('testnet');
       expect(finalMetadata.bounty.confirmedAt).toBe(999);
       expect(finalMetadata.bounty.amount).toBe('100');
-      expect(finalMetadata.bounty.coolingUntil).toBe(222);
     });
 
     it('should throw error for non-existent task', async () => {
@@ -373,7 +364,7 @@ describe('DataOperator Interface Tests', () => {
         taskHash: 'hash-success',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       };
 
@@ -396,7 +387,7 @@ describe('DataOperator Interface Tests', () => {
         taskHash: 'hash-schema',
         chain: { name: 'aptos', network: 'testnet', bountyId: '', contractAddress: '0x123' },
         workflow: { name: 'spec-kit', version: '1.0.0', adapter: 'spec-kit-mcp-adapter' },
-        bounty: { asset: 'APT', amount: '100', confirmedAt: null, coolingUntil: null },
+        bounty: { asset: 'APT', amount: '100', confirmedAt: null },
         dataLayer: { type: 'github', url: '' }
       };
 

@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @dev 支持 ETH 和 ERC20 代币作为赏金资产
  *
  * 状态机：Open → Accepted → Submitted → Confirmed → Claimed
- * 冷却期：确认后才能领取（测试环境设置为 0）
  */
 contract BountyManager is ReentrancyGuard, Ownable {
     // ========== 状态枚举 ==========
@@ -20,7 +19,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
         Open,       // 0: 已创建，等待接受
         Accepted,   // 1: 已接受，工作中
         Submitted,  // 2: 已提交，等待确认
-        Confirmed,  // 3: 已确认，冷却期中
+        Confirmed,  // 3: 已确认，可领取
         Claimed,    // 4: 已领取
         Cancelled   // 5: 已取消
     }
@@ -41,7 +40,6 @@ contract BountyManager is ReentrancyGuard, Ownable {
         uint256 submittedAt;
         string submissionUrl;
         uint256 confirmedAt;
-        uint256 coolingUntil;
         uint256 claimedAt;
     }
 
@@ -53,8 +51,6 @@ contract BountyManager is ReentrancyGuard, Ownable {
     mapping(address => uint256[]) public requesterBounties;
     mapping(address => uint256[]) public workerBounties;
 
-    // No cooling period for testing
-    uint256 public constant COOLING_PERIOD = 0;
 
     // ========== 事件 ==========
 
@@ -81,8 +77,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
 
     event BountyConfirmed(
         uint256 indexed bountyId,
-        uint256 confirmedAt,
-        uint256 coolingUntil
+        uint256 confirmedAt
     );
 
     event BountyClaimed(
@@ -133,7 +128,6 @@ contract BountyManager is ReentrancyGuard, Ownable {
             submittedAt: 0,
             submissionUrl: "",
             confirmedAt: 0,
-            coolingUntil: 0,
             claimedAt: 0
         });
 
@@ -185,7 +179,6 @@ contract BountyManager is ReentrancyGuard, Ownable {
             submittedAt: 0,
             submissionUrl: "",
             confirmedAt: 0,
-            coolingUntil: 0,
             claimedAt: 0
         });
 
@@ -251,13 +244,12 @@ contract BountyManager is ReentrancyGuard, Ownable {
 
         bounty.status = BountyStatus.Confirmed;
         bounty.confirmedAt = confirmedAt;
-        bounty.coolingUntil = confirmedAt + COOLING_PERIOD;
 
-        emit BountyConfirmed(bountyId, confirmedAt, bounty.coolingUntil);
+        emit BountyConfirmed(bountyId, confirmedAt);
     }
 
     /**
-     * @notice 领取赏金（冷却期结束后）
+     * @notice 领取赏金
      * @param bountyId Bounty ID
      */
     function claimBounty(uint256 bountyId) external nonReentrant {
@@ -265,7 +257,6 @@ contract BountyManager is ReentrancyGuard, Ownable {
         require(bounty.bountyId != 0, "Bounty not found");
         require(bounty.status == BountyStatus.Confirmed, "Bounty not confirmed");
         require(msg.sender == bounty.worker, "Only worker can claim");
-        require(block.timestamp >= bounty.coolingUntil, "Cooling period not ended");
 
         bounty.status = BountyStatus.Claimed;
         bounty.claimedAt = block.timestamp;

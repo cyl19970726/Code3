@@ -105,7 +105,6 @@ export async function publishBounty(
           asset: args.asset,
           amount: args.amount,
           confirmedAt: null,
-          coolingUntil: null
         },
         dataLayer: {
           type: 'github',

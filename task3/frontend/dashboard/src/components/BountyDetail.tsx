@@ -29,37 +29,6 @@ const CHAIN_EMOJI: Record<string, string> = {
 };
 
 export function BountyDetail({ bounty }: BountyDetailProps) {
-  const [coolingTimeLeft, setCoolingTimeLeft] = useState<string>('');
-
-  // Update cooling period countdown every second
-  useEffect(() => {
-    if (!bounty.coolingUntil) {
-      return;
-    }
-
-    const updateCountdown = () => {
-      const now = Date.now();
-      const remaining = bounty.coolingUntil! - now;
-
-      if (remaining <= 0) {
-        setCoolingTimeLeft('Cooling period ended');
-        return;
-      }
-
-      const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-
-      setCoolingTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [bounty.coolingUntil]);
-
   // Build GitHub URLs
   const githubIssueUrl = bounty.taskUrl;
   const githubPrUrl = bounty.submissionUrl;
@@ -136,17 +105,6 @@ export function BountyDetail({ bounty }: BountyDetailProps) {
                 timestamp={bounty.confirmedAt}
                 active={!!bounty.confirmedAt}
               />
-              {bounty.coolingUntil && (
-                <div className="flex items-center gap-3 text-sm">
-                  <span className="text-2xl">⏳</span>
-                  <div>
-                    <div className="font-medium">Cooling Period</div>
-                    <div className="text-muted-foreground">
-                      {coolingTimeLeft || 'Calculating...'}
-                    </div>
-                  </div>
-                </div>
-              )}
               <TimelineItem
                 label="Claimed"
                 timestamp={bounty.claimedAt}

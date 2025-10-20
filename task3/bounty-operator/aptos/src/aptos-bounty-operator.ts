@@ -327,7 +327,6 @@ export class AptosBountyOperator implements BountyOperator {
       acceptedAt: Number(moveData.accepted_at || 0) || null,
       submittedAt: Number(moveData.submitted_at || 0) || null,
       confirmedAt: Number(moveData.confirmed_at || 0) || null,
-      coolingUntil: Number(moveData.cooling_until || 0) || null,
       claimedAt: Number(moveData.claimed_at || 0) || null
     };
   }

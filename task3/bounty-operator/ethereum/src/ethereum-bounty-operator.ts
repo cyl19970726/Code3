@@ -66,7 +66,7 @@ export class EthereumBountyOperator implements BountyOperator {
     'function listBounties(uint256 offset, uint256 limit) external view returns (uint256[] memory)',
 
     // Events
-    'event BountyCreated(uint256 indexed bountyId, string taskId, bytes32 indexed taskHash, address indexed requester, uint256 amount, address asset)',
+    'event BountyCreated(uint256 indexed bountyId, string taskId, bytes32 taskHash, address indexed requester, uint256 amount, address asset)',
     'event BountyAccepted(uint256 indexed bountyId, address indexed worker, uint256 acceptedAt)',
     'event BountySubmitted(uint256 indexed bountyId, string submissionUrl, uint256 submittedAt)',
     'event BountyConfirmed(uint256 indexed bountyId, uint256 confirmedAt)',

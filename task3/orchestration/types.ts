@@ -59,7 +59,6 @@ export interface ConfirmFlowParams {
 export interface ConfirmFlowResult {
   txHash: string;
   confirmedAt: number;
-  coolingUntil: number;
 }
 
 export interface ClaimFlowParams {

@@ -133,11 +133,6 @@ export class AptosOperator {
         ? Number((merged_at as { vec: unknown[] }).vec[0]) * 1000 // Convert to milliseconds
         : undefined;
 
-      // Extract cooling_until if present (Option<u64>)
-      const coolingUntilTimestamp = cooling_until && typeof cooling_until === 'object' && 'vec' in cooling_until
-        ? Number((cooling_until as { vec: unknown[] }).vec[0]) * 1000 // Convert to milliseconds
-        : undefined;
-
       const bountyStatus = STATUS_MAP[status as number] || 'Open';
 
       return {
@@ -153,7 +148,6 @@ export class AptosOperator {
         chain: 'aptos',
         createdAt: Number(created_at) * 1000, // Convert to milliseconds
         confirmedAt: mergedAtTimestamp,
-        coolingUntil: coolingUntilTimestamp,
         submissionUrl: prUrl || undefined,
       };
     } catch (error) {

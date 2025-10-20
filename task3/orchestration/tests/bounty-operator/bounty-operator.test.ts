@@ -36,8 +36,7 @@ class MockBountyOperator implements BountyOperator {
       worker: null,
       acceptedAt: null,
       submittedAt: null,
-      confirmedAt: null,
-      coolingUntil: null
+      confirmedAt: null
     };
     this.bounties.set(bountyId, bounty);
     this.taskHashMap.set(params.taskHash, bountyId);
@@ -85,11 +84,9 @@ class MockBountyOperator implements BountyOperator {
       throw new Error(`Cannot confirm bounty with status ${bounty.status}`);
     }
     const confirmedAt = Math.floor(Date.now() / 1000);
-    const coolingUntil = confirmedAt + 7 * 24 * 60 * 60; // 7 days
     bounty.status = 'Confirmed';
     bounty.confirmedAt = confirmedAt;
-    bounty.coolingUntil = coolingUntil;
-    return { txHash: 'mock-confirm-tx', confirmedAt, coolingUntil };
+    return { txHash: 'mock-confirm-tx', confirmedAt };
   }
 
   async claimPayout(params: any) {
@@ -97,10 +94,6 @@ class MockBountyOperator implements BountyOperator {
     if (!bounty) throw new Error('Bounty not found');
     if (bounty.status !== 'Confirmed') {
       throw new Error(`Cannot claim bounty with status ${bounty.status}`);
-    }
-    const now = Math.floor(Date.now() / 1000);
-    if (bounty.coolingUntil && now < bounty.coolingUntil) {
-      throw new Error('Cooling period not ended');
     }
     bounty.status = 'Completed';
     return { txHash: 'mock-claim-tx' };
@@ -274,7 +267,7 @@ describe('BountyOperator Interface Tests', () => {
   });
 
   describe('confirmBounty', () => {
-    it('should confirm a Submitted bounty and start cooling period', async () => {
+    it('should confirm a Submitted bounty', async () => {
       const createResult = await operator.createBounty({
         taskHash: 'hash-confirm',
         sponsor: '0xSponsor',
@@ -288,11 +281,9 @@ describe('BountyOperator Interface Tests', () => {
       const result = await operator.confirmBounty({ bountyId: createResult.bountyId });
       expect(result.txHash).toBe('mock-confirm-tx');
       expect(result.confirmedAt).toBeGreaterThan(0);
-      expect(result.coolingUntil).toBeGreaterThan(result.confirmedAt);
 
       const bounty = await operator.getBounty({ bountyId: createResult.bountyId });
       expect(bounty.status).toBe('Confirmed');
-      expect(bounty.coolingUntil).toBe(result.coolingUntil);
     });
 
     it('should reject confirming non-Submitted bounty', async () => {
@@ -309,7 +300,7 @@ describe('BountyOperator Interface Tests', () => {
   });
 
   describe('claimPayout', () => {
-    it('should claim payout after cooling period', async () => {
+    it('should claim payout after confirmation', async () => {
       const createResult = await operator.createBounty({
         taskHash: 'hash-claim',
         sponsor: '0xSponsor',
@@ -321,31 +312,11 @@ describe('BountyOperator Interface Tests', () => {
       await operator.submitBounty({ bountyId: createResult.bountyId });
       await operator.confirmBounty({ bountyId: createResult.bountyId });
 
-      // Simulate cooling period ended
-      const bounty = await operator.getBounty({ bountyId: createResult.bountyId });
-      bounty.coolingUntil = Math.floor(Date.now() / 1000) - 1;
-
       const result = await operator.claimPayout({ bountyId: createResult.bountyId });
       expect(result.txHash).toBe('mock-claim-tx');
 
       const updatedBounty = await operator.getBounty({ bountyId: createResult.bountyId });
       expect(updatedBounty.status).toBe('Completed');
-    });
-
-    it('should reject claiming before cooling period ends', async () => {
-      const createResult = await operator.createBounty({
-        taskHash: 'hash-claim-2',
-        sponsor: '0xSponsor',
-        amount: '100',
-        asset: 'APT'
-      });
-
-      await operator.acceptBounty({ bountyId: createResult.bountyId, worker: '0xWorker' });
-      await operator.submitBounty({ bountyId: createResult.bountyId });
-      await operator.confirmBounty({ bountyId: createResult.bountyId });
-
-      await expect(operator.claimPayout({ bountyId: createResult.bountyId }))
-        .rejects.toThrow('Cooling period not ended');
     });
 
     it('should reject claiming non-Confirmed bounty', async () => {
