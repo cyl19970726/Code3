@@ -21,20 +21,16 @@ describe('BountyManager', function () {
       const address = await bountyManager.getAddress();
       expect(address).to.be.properAddress;
     });
-
-    it('should set the correct cooling period', async function () {
-      const coolingPeriod = await bountyManager.COOLING_PERIOD();
-      expect(coolingPeriod).to.equal(7 * 24 * 60 * 60); // 7 days
-    });
   });
 
   describe('createBounty (ETH)', function () {
     it('should create a bounty with ETH', async function () {
       const taskId = 'test-task-001';
+      const taskUrl = 'https://github.com/test-org/test-repo/issues/1';
       const taskHash = ethers.keccak256(ethers.toUtf8Bytes(taskId));
       const amount = ethers.parseEther('1.0');
 
-      const tx = await bountyManager.connect(requester).createBounty(taskId, taskHash, {
+      const tx = await bountyManager.connect(requester).createBounty(taskId, taskUrl, taskHash, {
         value: amount
       });
 
@@ -44,6 +40,7 @@ describe('BountyManager', function () {
       // Verify bounty data
       const bounty = await bountyManager.getBounty(1);
       expect(bounty.taskId).to.equal(taskId);
+      expect(bounty.taskUrl).to.equal(taskUrl);
       expect(bounty.taskHash).to.equal(taskHash);
       expect(bounty.requester).to.equal(requester.address);
       expect(bounty.amount).to.equal(amount);
@@ -51,26 +48,37 @@ describe('BountyManager', function () {
       expect(bounty.status).to.equal(0); // Open
     });
 
-    it('should fail if amount is zero', async function () {
+    it('should fail if taskUrl is empty', async function () {
       const taskId = 'test-task-002';
       const taskHash = ethers.keccak256(ethers.toUtf8Bytes(taskId));
 
       await expect(
-        bountyManager.connect(requester).createBounty(taskId, taskHash, { value: 0 })
+        bountyManager.connect(requester).createBounty(taskId, '', taskHash, { value: ethers.parseEther('1.0') })
+      ).to.be.revertedWith('Task URL is required');
+    });
+
+    it('should fail if amount is zero', async function () {
+      const taskId = 'test-task-003';
+      const taskUrl = 'https://github.com/test-org/test-repo/issues/3';
+      const taskHash = ethers.keccak256(ethers.toUtf8Bytes(taskId));
+
+      await expect(
+        bountyManager.connect(requester).createBounty(taskId, taskUrl, taskHash, { value: 0 })
       ).to.be.revertedWith('Amount must be greater than 0');
     });
 
     it('should prevent duplicate bounty for same taskHash', async function () {
-      const taskId = 'test-task-003';
+      const taskId = 'test-task-004';
+      const taskUrl = 'https://github.com/test-org/test-repo/issues/4';
       const taskHash = ethers.keccak256(ethers.toUtf8Bytes(taskId));
       const amount = ethers.parseEther('1.0');
 
       // First creation
-      await bountyManager.connect(requester).createBounty(taskId, taskHash, { value: amount });
+      await bountyManager.connect(requester).createBounty(taskId, taskUrl, taskHash, { value: amount });
 
       // Second creation (should fail)
       await expect(
-        bountyManager.connect(requester).createBounty(taskId, taskHash, { value: amount })
+        bountyManager.connect(requester).createBounty(taskId, taskUrl, taskHash, { value: amount })
       ).to.be.revertedWith('Bounty already exists for this task');
     });
   });
@@ -80,10 +88,11 @@ describe('BountyManager', function () {
 
     beforeEach(async function () {
       const taskId = 'test-task-accept';
+      const taskUrl = 'https://github.com/test-org/test-repo/issues/accept';
       const taskHash = ethers.keccak256(ethers.toUtf8Bytes(taskId));
       const amount = ethers.parseEther('1.0');
 
-      await bountyManager.connect(requester).createBounty(taskId, taskHash, { value: amount });
+      await bountyManager.connect(requester).createBounty(taskId, taskUrl, taskHash, { value: amount });
       bountyId = 1;
     });
 
@@ -118,9 +127,10 @@ describe('BountyManager', function () {
       // Create multiple bounties
       for (let i = 0; i < 3; i++) {
         const taskId = `test-task-${i}`;
+        const taskUrl = `https://github.com/test-org/test-repo/issues/${i}`;
         const taskHash = ethers.keccak256(ethers.toUtf8Bytes(taskId));
         const amount = ethers.parseEther('1.0');
-        await bountyManager.connect(requester).createBounty(taskId, taskHash, { value: amount });
+        await bountyManager.connect(requester).createBounty(taskId, taskUrl, taskHash, { value: amount });
       }
     });
 

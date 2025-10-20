@@ -86,12 +86,6 @@ export async function confirmBounty(
     // 4. Return result
     let message = `✅ Bounty confirmed successfully!\n\n- Tx Hash: ${result.txHash}\n- Confirmed At: ${new Date(result.confirmedAt * 1000).toISOString()}\n- Chain: ${args.chain} (${chainConfig.network})`;
 
-    if (result.coolingUntil) {
-      const coolingEndDate = new Date(result.coolingUntil * 1000).toISOString();
-      message += `\n- Cooling Period Ends: ${coolingEndDate}\n\nThe worker can claim the bounty after the cooling period ends.`;
-    } else {
-      message += `\n\nThe worker can now claim the bounty.`;
-    }
 
     return {
       content: [{ type: 'text', text: message }]

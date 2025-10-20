@@ -29,6 +29,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
     struct Bounty {
         uint256 bountyId;
         string taskId;
+        string taskUrl;
         bytes32 taskHash;
         address requester;
         address worker;
@@ -57,6 +58,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
     event BountyCreated(
         uint256 indexed bountyId,
         string taskId,
+        string taskUrl,
         bytes32 taskHash,
         address indexed requester,
         uint256 amount,
@@ -102,13 +104,16 @@ contract BountyManager is ReentrancyGuard, Ownable {
     /**
      * @notice 创建 Bounty（ETH 作为赏金）
      * @param taskId 任务 ID（来自 GitHub Issue 或其他数据层）
+     * @param taskUrl 任务 URL（GitHub Issue URL）
      * @param taskHash 任务内容哈希（用于幂等性检查）
      * @return bountyId 创建的 Bounty ID
      */
     function createBounty(
         string memory taskId,
+        string memory taskUrl,
         bytes32 taskHash
     ) external payable nonReentrant returns (uint256) {
+        require(bytes(taskUrl).length > 0, "Task URL is required");
         require(msg.value > 0, "Amount must be greater than 0");
         require(taskHashToBountyId[taskHash] == 0, "Bounty already exists for this task");
 
@@ -117,6 +122,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
         bounties[bountyId] = Bounty({
             bountyId: bountyId,
             taskId: taskId,
+            taskUrl: taskUrl,
             taskHash: taskHash,
             requester: msg.sender,
             worker: address(0),
@@ -134,7 +140,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
         taskHashToBountyId[taskHash] = bountyId;
         requesterBounties[msg.sender].push(bountyId);
 
-        emit BountyCreated(bountyId, taskId, taskHash, msg.sender, msg.value, address(0));
+        emit BountyCreated(bountyId, taskId, taskUrl, taskHash, msg.sender, msg.value, address(0));
 
         return bountyId;
     }
@@ -142,6 +148,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
     /**
      * @notice 创建 Bounty（ERC20 代币作为赏金）
      * @param taskId 任务 ID
+     * @param taskUrl 任务 URL（GitHub Issue URL）
      * @param taskHash 任务内容哈希
      * @param asset ERC20 代币地址
      * @param amount 代币数量
@@ -149,10 +156,12 @@ contract BountyManager is ReentrancyGuard, Ownable {
      */
     function createBountyWithToken(
         string memory taskId,
+        string memory taskUrl,
         bytes32 taskHash,
         address asset,
         uint256 amount
     ) external nonReentrant returns (uint256) {
+        require(bytes(taskUrl).length > 0, "Task URL is required");
         require(asset != address(0), "Invalid token address");
         require(amount > 0, "Amount must be greater than 0");
         require(taskHashToBountyId[taskHash] == 0, "Bounty already exists for this task");
@@ -168,6 +177,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
         bounties[bountyId] = Bounty({
             bountyId: bountyId,
             taskId: taskId,
+            taskUrl: taskUrl,
             taskHash: taskHash,
             requester: msg.sender,
             worker: address(0),
@@ -185,7 +195,7 @@ contract BountyManager is ReentrancyGuard, Ownable {
         taskHashToBountyId[taskHash] = bountyId;
         requesterBounties[msg.sender].push(bountyId);
 
-        emit BountyCreated(bountyId, taskId, taskHash, msg.sender, amount, asset);
+        emit BountyCreated(bountyId, taskId, taskUrl, taskHash, msg.sender, amount, asset);
 
         return bountyId;
     }

@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/hhh0x/workflows/doing/Code3/task3/bounty-operator/ethereum/contract/contracts/BountyManager.sol": {
-      "lastModificationDate": 1760930064882,
-      "contentHash": "34c89b4fda6c5c1759dc128538d0c9d0",
+      "lastModificationDate": 1760938085061,
+      "contentHash": "f57e373bca9e57b8d0186d4d147c688e",
       "sourceName": "contracts/BountyManager.sol",
       "solcConfig": {
         "version": "0.8.20",
