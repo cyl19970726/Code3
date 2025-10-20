@@ -5,9 +5,60 @@
 
 ---
 
-## 1. 前置条件
+## 1. 快速开始（3 分钟）
 
-### 1.1 开发环境
+### 1.1 配置 MCP 工具
+
+**spec-kit-mcp**（工作流工具）- 添加到 `.mcp.json`：
+```json
+{
+  "mcpServers": {
+    "spec-kit": {
+      "command": "npx",
+      "args": ["-y", "@code3-team/spec-kit-mcp"]
+    }
+  }
+}
+```
+
+**spec-kit-mcp-adapter**（Bounty 工具）- 添加到 `.mcp.json`：
+```json
+{
+  "mcpServers": {
+    "spec-kit-adapter": {
+      "command": "node",
+      "args": ["/Users/your-path/Code3/task3/adapters/spec-kit-mcp-adapter/dist/src/server.js"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_your_token_here",
+        "GITHUB_REPO": "owner/repo",
+        "ETHEREUM_PRIVATE_KEY": "0x_your_ethereum_key",
+        "APTOS_PRIVATE_KEY": "0x_your_aptos_key"
+      }
+    }
+  }
+}
+```
+
+**注意**：
+- RPC URLs 和合约地址在 `src/chain-config.ts` 中预配置，无需填写
+- Ethereum 合约：`0x8A0f158B6568BCf1F488fd4e4D7835686FE5a292`（Sepolia）
+- 获取测试币：[Sepolia Faucet](https://sepoliafaucet.com/)
+
+### 1.2 启动前端
+
+```bash
+cd /Users/hhh0x/workflows/doing/Code3/task3/frontend/dashboard
+npm install
+npm run dev
+```
+
+访问：`http://localhost:3000`
+
+---
+
+## 2. 前置条件
+
+### 2.1 开发环境
 
 **必需工具**：
 - Node.js 18+
@@ -20,7 +71,7 @@
 - Aptos CLI（Aptos 链开发）
 - Hardhat（Ethereum 链开发）
 
-### 1.2 账户准备
+### 2.2 账户准备
 
 **区块链账户**：
 - Aptos 账户（Testnet/Mainnet）
@@ -41,16 +92,16 @@ aptos account fund-with-faucet --account <YOUR_ADDRESS>
 
 ---
 
-## 2. 环境配置
+## 3. 环境配置
 
-### 2.1 克隆仓库
+### 3.1 克隆仓库
 
 ```bash
 git clone https://github.com/code3-team/code3.git
 cd code3
 ```
 
-### 2.2 安装依赖
+### 3.2 安装依赖
 
 ```bash
 # 安装所有依赖（npm workspaces）
@@ -60,11 +111,11 @@ npm install
 npm run build
 ```
 
-### 2.3 配置环境变量
+### 3.3 配置环境变量
 
 Code3 项目包含多个子模块，每个模块都有自己的 `.env` 文件。下面是完整的配置指南。
 
-#### 2.3.1 配置文件清单
+#### 3.3.1 配置文件清单
 
 | 文件路径 | 用途 | 必需 |
 |---------|------|------|
@@ -75,7 +126,7 @@ Code3 项目包含多个子模块，每个模块都有自己的 `.env` 文件。
 | `task3/bounty-operator/ethereum/contract/.env` | Ethereum 合约部署 | ⚠️ 部署时 |
 | `task3/bounty-operator/aptos/contract/.env.testnet` | Aptos 合约部署 | ⚠️ 部署时 |
 
-#### 2.3.2 Dashboard 配置（`task3/frontend/dashboard/.env`）
+#### 3.3.2 Dashboard 配置（`task3/frontend/dashboard/.env`）
 
 **用途**：前端 Dashboard 连接区块链和 GitHub
 
@@ -104,7 +155,7 @@ npm run dev
 # 访问 http://localhost:3000
 ```
 
-#### 2.3.3 MCP Adapter 配置（`task3/adapters/spec-kit-mcp-adapter/.env`）
+#### 3.3.3 MCP Adapter 配置（`task3/adapters/spec-kit-mcp-adapter/.env`）
 
 **用途**：MCP 服务器运行时配置（用于 Claude Desktop）
 
@@ -158,7 +209,7 @@ LOCAL_SPECS_DIR=./specs
 - `confirm-bounty` - 确认工作
 - `claim-bounty` - 领取赏金
 
-#### 2.3.4 MCP Adapter 测试配置（`task3/adapters/spec-kit-mcp-adapter/.env.test`）
+#### 3.3.4 MCP Adapter 测试配置（`task3/adapters/spec-kit-mcp-adapter/.env.test`）
 
 **用途**：E2E 测试环境变量（User + Worker 两个钱包）
 
@@ -187,7 +238,7 @@ cd task3/adapters/spec-kit-mcp-adapter
 pnpm test:e2e
 ```
 
-#### 2.3.5 Ethereum 合约部署配置（`task3/bounty-operator/ethereum/contract/.env`）
+#### 3.3.5 Ethereum 合约部署配置（`task3/bounty-operator/ethereum/contract/.env`）
 
 **用途**：部署 Ethereum 合约到 Sepolia 测试网
 
@@ -225,7 +276,7 @@ npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
 - **冷静期**：0 seconds（测试环境）
 - **Etherscan**：https://sepolia.etherscan.io/address/0x28FE83352f2451c54d9050761DF1d7F8945a8fc4#code
 
-#### 2.3.6 Aptos 合约部署配置（`task3/bounty-operator/aptos/contract/.env.testnet`）
+#### 3.3.6 Aptos 合约部署配置（`task3/bounty-operator/aptos/contract/.env.testnet`）
 
 **用途**：部署 Aptos 合约到 Testnet
 
@@ -262,7 +313,7 @@ aptos move publish \
 - **网络**：Aptos Testnet
 - **冷静期**：0 seconds（测试环境）
 
-#### 2.3.7 获取测试币
+#### 3.3.7 获取测试币
 
 **Aptos Testnet 水龙头**：
 ```bash
@@ -278,7 +329,7 @@ aptos account fund-with-faucet --account <YOUR_ADDRESS>
 - Infura：https://www.infura.io/faucet/sepolia
 - QuickNode：https://faucet.quicknode.com/ethereum/sepolia
 
-#### 2.3.8 安全最佳实践
+#### 3.3.8 安全最佳实践
 
 **⚠️ 永远不要**：
 - ❌ 将 `.env` 文件提交到 Git（已在 `.gitignore` 中）
@@ -295,9 +346,9 @@ aptos account fund-with-faucet --account <YOUR_ADDRESS>
 
 ---
 
-## 3. 部署合约（仅首次）
+## 4. 部署合约（仅首次）
 
-### 3.1 部署 Aptos 合约
+### 4.1 部署 Aptos 合约
 
 ```bash
 cd Code3/task3/bounty-operator/aptos/contract
@@ -314,7 +365,7 @@ aptos move publish \
 echo "APTOS_CONTRACT_ADDRESS=<DEPLOYED_ADDRESS>" >> ../../../../.env
 ```
 
-### 3.2 部署 Ethereum 合约
+### 4.2 部署 Ethereum 合约
 
 ```bash
 cd Code3/task3/bounty-operator/ethereum/contract
@@ -334,9 +385,9 @@ echo "ETHEREUM_CONTRACT_ADDRESS=<DEPLOYED_ADDRESS>" >> ../../../../.env
 
 ---
 
-## 4. 第一个 Bounty（spec-kit 工作流）
+## 5. 第一个 Bounty（spec-kit 工作流）
 
-### 4.1 启动 MCP 服务器
+### 5.1 启动 MCP 服务器
 
 **方式 1：使用 Claude Code**
 ```bash
@@ -363,7 +414,7 @@ cd Code3/task3/adapters/spec-kit-adapter
 npm start
 ```
 
-### 4.2 Requester：发布 Bounty
+### 5.2 Requester：发布 Bounty
 
 **Step 1：创建功能规范**
 
@@ -394,7 +445,7 @@ npm start
 ✅ txHash = 0xabcd...
 ```
 
-### 4.3 Worker：接单
+### 5.3 Worker：接单
 
 **在 Claude Code 中**：
 ```
@@ -410,7 +461,7 @@ npm start
 ✅ txHash = 0xdef0...
 ```
 
-### 4.4 Worker：实施功能
+### 5.4 Worker：实施功能
 
 **使用 spec-kit-mcp 工作流**：
 ```
@@ -427,7 +478,7 @@ npm start
    - 提交到分支
 ```
 
-### 4.5 Worker：提交工作成果
+### 5.5 Worker：提交工作成果
 
 **在 Claude Code 中**：
 ```
@@ -444,7 +495,7 @@ npm start
 ✅ txHash = 0x1234...
 ```
 
-### 4.6 Requester：确认工作
+### 5.6 Requester：确认工作
 
 **审查 PR 后，在 Claude Code 中**：
 ```
@@ -461,7 +512,7 @@ npm start
 ✅ txHash = 0x5678...
 ```
 
-### 4.7 Worker：领取赏金
+### 5.7 Worker：领取赏金
 
 **7 天后，在 Claude Code 中**：
 ```
@@ -480,9 +531,9 @@ npm start
 
 ---
 
-## 5. 使用 Ethereum 链
+## 6. 使用 Ethereum 链
 
-### 5.1 发布 Bounty（Ethereum）
+### 6.1 发布 Bounty（Ethereum）
 
 ```
 使用 spec-kit-adapter 的 publish-bounty 工具：
@@ -498,22 +549,22 @@ npm start
 - 调用 Ethereum 合约的 `createBounty`
 - 其他流程完全相同
 
-### 5.2 后续流程
+### 6.2 后续流程
 
 接单、提交、确认、领取流程与 Aptos 完全相同，只需在调用工具时指定 `chain: "ethereum"`。
 
 ---
 
-## 6. 使用 observer-mcp 工作流
+## 7. 使用 observer-mcp 工作流
 
-### 6.1 observer-mcp 特点
+### 7.1 observer-mcp 特点
 
 **与 spec-kit-mcp 的区别**：
 - 数据存储：IPFS（去中心化）而非 GitHub Issue
 - 任务类型：观察者任务（数据采集、监控）
 - 提交方式：IPFS CID 而非 GitHub PR
 
-### 6.2 发布观察任务
+### 7.2 发布观察任务
 
 **在 Claude Code 中**：
 ```
@@ -531,7 +582,7 @@ npm start
 ✅ Aptos Bounty 创建成功
 ```
 
-### 6.3 提交观察结果
+### 7.3 提交观察结果
 
 ```
 使用 observer-adapter 的 submit-bounty 工具：
@@ -548,9 +599,9 @@ npm start
 
 ---
 
-## 7. 使用 Dashboard（前端）
+## 8. 使用 Dashboard（前端）
 
-### 7.1 启动 Dashboard
+### 8.1 启动 Dashboard
 
 ```bash
 cd Code3/task3/frontend
@@ -564,7 +615,7 @@ npm run dev
 
 访问：`http://localhost:3000`
 
-### 7.2 连接钱包
+### 8.2 连接钱包
 
 **Aptos 钱包**：
 1. 安装 Petra Wallet 浏览器扩展
@@ -578,7 +629,7 @@ npm run dev
 3. 选择"Ethereum (MetaMask)"
 4. 授权连接
 
-### 7.3 浏览 Bounty
+### 8.3 浏览 Bounty
 
 **Bounty 列表页**（`/`）：
 - 显示所有 Open/Accepted/Submitted 状态的 Bounty
@@ -591,7 +642,7 @@ npm run dev
 - 显示提交内容（PR/IPFS）
 - 操作按钮：Accept、Submit、Confirm、Claim
 
-### 7.4 发布 Bounty
+### 8.4 发布 Bounty
 
 **发布页**（`/publish`）：
 1. 填写表单：
@@ -606,9 +657,9 @@ npm run dev
 
 ---
 
-## 8. 常见问题
+## 9. 常见问题
 
-### 8.1 幂等性检查
+### 9.1 幂等性检查
 
 **问题**：我不小心多次调用了 `publish-bounty`，会创建重复的 Bounty 吗？
 
@@ -627,13 +678,13 @@ npm run dev
 - 返回 { isNew: false, bountyId: "123", txHash: null }
 ```
 
-### 8.2 状态验证
+### 9.2 状态验证
 
 **问题**：Worker 已经接单，我能再次接单吗？
 
 **回答**：不能。`acceptFlow` 会调用 `getBounty(bountyId)` 检查状态。如果状态不是 `Open`，会抛出错误 `"Bounty is not Open (current: Accepted)"`。
 
-### 8.3 冷静期验证
+### 9.3 冷静期验证
 
 **问题**：Requester 确认后，Worker 能立即领取赏金吗？
 
@@ -641,7 +692,7 @@ npm run dev
 
 **冷静期时长**：7 天（604800 秒）
 
-### 8.4 Gas 费用
+### 9.4 Gas 费用
 
 **Aptos**：
 - 每笔交易约 0.0001-0.001 APT
@@ -652,7 +703,7 @@ npm run dev
 - Mainnet Gas 费用动态调整（EIP-1559）
 - 建议在 Gas 价格较低时操作
 
-### 8.5 MCP 工具不可用
+### 9.5 MCP 工具不可用
 
 **问题**：Claude Code 提示"MCP server not available"
 
@@ -664,9 +715,9 @@ npm run dev
 
 ---
 
-## 9. 测试
+## 10. 测试
 
-### 9.1 单元测试
+### 10.1 单元测试
 
 **运行所有测试**：
 ```bash
@@ -684,7 +735,7 @@ cd Code3/task3/bounty-operator/aptos
 npm test
 ```
 
-### 9.2 E2E 测试
+### 10.2 E2E 测试
 
 ```bash
 cd Code3/task3/adapters/spec-kit-adapter
@@ -701,9 +752,9 @@ npm run test:e2e
 
 ---
 
-## 10. 下一步
+## 11. 下一步
 
-### 10.1 深入学习
+### 11.1 深入学习
 
 - **数据模型**：[01-data-model.md](./01-data-model.md) — 了解 Bounty 实体和状态机
 - **接口定义**：[02-interfaces.md](./02-interfaces.md) — 了解三层架构的接口
@@ -711,7 +762,7 @@ npm run test:e2e
 - **数据流**：[04-datastream.md](./04-datastream.md) — 了解完整数据流
 - **包结构**：[05-packages-structure.md](./05-packages-structure.md) — 了解模块组织
 
-### 10.2 贡献指南
+### 11.2 贡献指南
 
 **提交 Issue**：
 - Bug 报告：https://github.com/code3-team/code3/issues/new?template=bug_report.md
@@ -723,7 +774,7 @@ npm run test:e2e
 3. 编写代码 + 测试
 4. 提交 PR：参考 [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
-### 10.3 社区
+### 11.3 社区
 
 - **Discord**：https://discord.gg/code3
 - **Twitter**：https://twitter.com/code3team
@@ -731,7 +782,7 @@ npm run test:e2e
 
 ---
 
-## 11. 参考
+## 12. 参考
 
 - **ADR-012**：[TRUTH.md](../../TRUTH.md) ADR-012
 - **数据模型**：[01-data-model.md](./01-data-model.md)
