@@ -35,11 +35,12 @@ describe.only('E2E: Ethereum Bounty Complete Flow', () => {
     rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
     requesterPrivateKey: process.env.PRIVATE_KEY || '',
     workerPrivateKey: process.env.WORKER_PRIVATE_KEY || '',
-    contractAddress: process.env.CONTRACT_ADDRESS || '0xc18C3F54778D2B1527c1081Ed15F030170C42B82'
+    contractAddress: process.env.CONTRACT_ADDRESS || '0x8A0f158B6568BCf1F488fd4e4D7835686FE5a292'
   };
 
   // Test data
   const testTaskId = `test-task-${Date.now()}`;
+  const testTaskUrl = `https://github.com/code3-team/test-repo/issues/${Date.now()}`;
   const testTaskHash = ethers.keccak256(ethers.toUtf8Bytes(testTaskId));
   const testAmount = ethers.parseEther('0.01').toString(); // 0.01 ETH
 
@@ -87,6 +88,7 @@ describe.only('E2E: Ethereum Bounty Complete Flow', () => {
     // When
     const result = await requesterOperator.createBounty({
       taskId: testTaskId,
+      taskUrl: testTaskUrl,
       taskHash: testTaskHash,
       amount: testAmount,
       asset: 'ETH'
@@ -108,6 +110,7 @@ describe.only('E2E: Ethereum Bounty Complete Flow', () => {
     // Verify bounty state
     const bounty = await requesterOperator.getBounty({ bountyId: testBountyId });
     expect(bounty.status).toBe(BountyStatus.Open);
+    expect(bounty.taskUrl).toBe(testTaskUrl);
     expect(bounty.amount).toBe(testAmount);
     expect(bounty.asset).toBe('ETH');
     expect(bounty.worker).toBeNull();
@@ -261,11 +264,12 @@ describe.skip('E2E: Ethereum Bounty Cancellation Flow', () => {
   const config = {
     rpcUrl: process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
     privateKey: process.env.PRIVATE_KEY || '',
-    contractAddress: process.env.CONTRACT_ADDRESS || '0xc18C3F54778D2B1527c1081Ed15F030170C42B82'
+    contractAddress: process.env.CONTRACT_ADDRESS || '0x8A0f158B6568BCf1F488fd4e4D7835686FE5a292'
   };
 
   // Test data
   const testTaskId = `test-cancel-${Date.now()}`;
+  const testTaskUrl = `https://github.com/code3-team/test-repo/issues/${Date.now()}`;
   const testTaskHash = ethers.keccak256(ethers.toUtf8Bytes(testTaskId));
   const testAmount = ethers.parseEther('0.01').toString();
 
@@ -291,6 +295,7 @@ describe.skip('E2E: Ethereum Bounty Cancellation Flow', () => {
   it('Step 1: should create a bounty', async () => {
     const result = await operator.createBounty({
       taskId: testTaskId,
+      taskUrl: testTaskUrl,
       taskHash: testTaskHash,
       amount: testAmount,
       asset: 'ETH'
