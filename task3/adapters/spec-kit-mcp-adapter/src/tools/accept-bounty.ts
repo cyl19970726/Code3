@@ -16,19 +16,23 @@ import { z } from 'zod';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { SpecKitDataOperator } from '../data-operator.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
+import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
+import type { BountyOperator } from '@code3-team/bounty-operator';
 import { ConcreteTask3Operator } from '@code3-team/orchestration';
 import { Network } from '@aptos-labs/ts-sdk';
+import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
 
 const AcceptBountySchema = z.object({
   issueUrl: z.string().describe('GitHub Issue URL'),
-  moduleAddress: z.string().describe('Module address for bounty contract')
+  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
 });
 
 export async function acceptBounty(
   args: z.infer<typeof AcceptBountySchema>,
   config: {
     githubToken: string;
-    aptosPrivateKey: string;
+    aptosPrivateKey?: string;
+    ethereumPrivateKey?: string;
     localSpecsDir: string;
     repo: string;
   }
@@ -41,13 +45,36 @@ export async function acceptBounty(
       localSpecsDir: config.localSpecsDir
     });
 
-    const bountyOperator = new AptosBountyOperator({
-      privateKey: config.aptosPrivateKey,
-      network: Network.TESTNET,
-      moduleAddress: args.moduleAddress
-    });
+    // 2. Create BountyOperator based on chain
+    let bountyOperator: BountyOperator;
+    let chainConfig;
 
-    // 2. Create Task3Operator instance and call acceptFlow
+    if (args.chain === 'ethereum') {
+      if (!config.ethereumPrivateKey) {
+        throw new Error('ETHEREUM_PRIVATE_KEY is required for Ethereum chain');
+      }
+
+      chainConfig = getEthereumConfig();
+      bountyOperator = new EthereumBountyOperator({
+        rpcUrl: chainConfig.rpcUrl,
+        privateKey: config.ethereumPrivateKey,
+        contractAddress: chainConfig.contractAddress
+      });
+    } else {
+      // Aptos
+      if (!config.aptosPrivateKey) {
+        throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
+      }
+
+      chainConfig = getAptosConfig();
+      bountyOperator = new AptosBountyOperator({
+        privateKey: config.aptosPrivateKey,
+        network: Network.TESTNET,
+        moduleAddress: chainConfig.contractAddress
+      });
+    }
+
+    // 3. Create Task3Operator instance and call acceptFlow
     const task3Operator = new ConcreteTask3Operator();
     const result = await task3Operator.acceptFlow({
       dataOperator,
@@ -55,8 +82,8 @@ export async function acceptBounty(
       taskUrl: args.issueUrl
     });
 
-    // 3. Return result
-    const message = `✅ Bounty accepted successfully!\n\n- Bounty ID: ${result.bountyId}\n- Local Path: ${result.localPath}\n- Tx Hash: ${result.txHash}\n\nYou can now start working on the spec.`;
+    // 4. Return result
+    const message = `✅ Bounty accepted successfully!\n\n- Bounty ID: ${result.bountyId}\n- Local path: ${result.localPath}\n- Tx Hash: ${result.txHash}\n- Chain: ${args.chain} (${chainConfig.network})\n\nYou can now start working on the spec.`;
 
     return {
       content: [{ type: 'text', text: message }]
@@ -92,11 +119,13 @@ Role: Executed by Worker to accept and start working on the task`,
         type: 'string',
         description: 'GitHub Issue URL (e.g., "https://github.com/owner/repo/issues/123")'
       },
-      moduleAddress: {
+      chain: {
         type: 'string',
-        description: 'Module address for bounty contract'
+        enum: ['aptos', 'ethereum'],
+        default: 'ethereum',
+        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
       }
     },
-    required: ['issueUrl', 'moduleAddress']
+    required: ['issueUrl', 'chain']
   }
 };

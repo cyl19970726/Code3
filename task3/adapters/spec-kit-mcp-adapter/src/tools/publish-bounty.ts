@@ -20,14 +20,14 @@ import type { BountyOperator } from '@code3-team/bounty-operator';
 import { ConcreteTask3Operator } from '@code3-team/orchestration';
 import { Network } from '@aptos-labs/ts-sdk';
 import fs from 'fs/promises';
+import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
 
 const PublishBountySchema = z.object({
   specPath: z.string().describe('Local spec.md file path (e.g., "specs/001/spec.md")'),
   repo: z.string().describe('GitHub repository (format: "owner/repo")'),
   amount: z.string().describe('Bounty amount (e.g., "100000000" for 1 APT, or "10000000000000000" for 0.01 ETH)'),
   asset: z.string().describe('Asset symbol (e.g., "APT", "ETH")'),
-  chain: z.enum(['aptos', 'ethereum']).default('aptos').describe('Target blockchain'),
-  moduleAddress: z.string().optional().describe('Contract address (optional if ETHEREUM_CONTRACT_ADDRESS or APTOS_MODULE_ADDRESS env var is set)')
+  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
 });
 
 export async function publishBounty(
@@ -36,9 +36,6 @@ export async function publishBounty(
     githubToken: string;
     aptosPrivateKey?: string;
     ethereumPrivateKey?: string;
-    ethereumRpcUrl?: string;
-    ethereumContractAddress?: string;
-    aptosModuleAddress?: string;
     localSpecsDir: string;
   }
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
@@ -55,55 +52,35 @@ export async function publishBounty(
 
     // 3. Create BountyOperator based on chain
     let bountyOperator: BountyOperator;
-    let network: string;
+    let chainConfig;
 
     if (args.chain === 'ethereum') {
       if (!config.ethereumPrivateKey) {
         throw new Error('ETHEREUM_PRIVATE_KEY is required for Ethereum chain');
       }
-      if (!config.ethereumRpcUrl) {
-        throw new Error('ETHEREUM_RPC_URL is required for Ethereum chain');
-      }
 
-      // Use contract address from env var if available, otherwise from args
-      const contractAddress = config.ethereumContractAddress || args.moduleAddress;
-      if (!contractAddress) {
-        throw new Error('Ethereum contract address is required (either ETHEREUM_CONTRACT_ADDRESS env var or moduleAddress parameter)');
-      }
-
+      chainConfig = getEthereumConfig();
       bountyOperator = new EthereumBountyOperator({
-        rpcUrl: config.ethereumRpcUrl,
+        rpcUrl: chainConfig.rpcUrl,
         privateKey: config.ethereumPrivateKey,
-        contractAddress
+        contractAddress: chainConfig.contractAddress
       });
-      network = 'sepolia'; // Default to Sepolia testnet
     } else {
       // Aptos
       if (!config.aptosPrivateKey) {
         throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
       }
 
-      // Use module address from env var if available, otherwise from args
-      const moduleAddress = config.aptosModuleAddress || args.moduleAddress;
-      if (!moduleAddress) {
-        throw new Error('Aptos module address is required (either APTOS_MODULE_ADDRESS env var or moduleAddress parameter)');
-      }
-
+      chainConfig = getAptosConfig();
       bountyOperator = new AptosBountyOperator({
         privateKey: config.aptosPrivateKey,
         network: Network.TESTNET,
-        moduleAddress
+        moduleAddress: chainConfig.contractAddress
       });
-      network = 'testnet';
     }
 
     // 4. Create Task3Operator instance and call publishFlow
     const task3Operator = new ConcreteTask3Operator();
-
-    // Get the actual contract/module address being used
-    const actualAddress = args.chain === 'ethereum'
-      ? (config.ethereumContractAddress || args.moduleAddress)
-      : (config.aptosModuleAddress || args.moduleAddress);
 
     const result = await task3Operator.publishFlow({
       dataOperator,
@@ -115,9 +92,9 @@ export async function publishBounty(
         taskHash: '', // Will be calculated by publishFlow
         chain: {
           name: args.chain,
-          network,
+          network: chainConfig.network,
           bountyId: '', // Will be set after creation
-          contractAddress: actualAddress
+          contractAddress: chainConfig.contractAddress
         },
         workflow: {
           name: 'spec-kit',
@@ -141,8 +118,8 @@ export async function publishBounty(
 
     // 5. Return result
     const message = result.isNew
-      ? `✅ Bounty published successfully on ${args.chain}!\n\n- Issue: ${result.taskUrl}\n- Bounty ID: ${result.bountyId}\n- Tx Hash: ${result.txHash}\n- Chain: ${args.chain} (${network})`
-      : `✅ Bounty already exists (idempotent)!\n\n- Issue: ${result.taskUrl}\n- Bounty ID: ${result.bountyId}\n- Chain: ${args.chain} (${network})\n- Status: Already published`;
+      ? `✅ Bounty published successfully on ${args.chain}!\n\n- Issue: ${result.taskUrl}\n- Bounty ID: ${result.bountyId}\n- Tx Hash: ${result.txHash}\n- Chain: ${args.chain} (${chainConfig.network})\n- Contract: ${chainConfig.contractAddress}`
+      : `✅ Bounty already exists (idempotent)!\n\n- Issue: ${result.taskUrl}\n- Bounty ID: ${result.bountyId}\n- Chain: ${args.chain} (${chainConfig.network})\n- Status: Already published`;
 
     return {
       content: [{ type: 'text', text: message }]
@@ -196,14 +173,10 @@ Supported chains:
       chain: {
         type: 'string',
         enum: ['aptos', 'ethereum'],
-        default: 'aptos',
-        description: 'Target blockchain (aptos=Aptos testnet, ethereum=Ethereum Sepolia)'
-      },
-      moduleAddress: {
-        type: 'string',
-        description: 'Contract address (optional if ETHEREUM_CONTRACT_ADDRESS or APTOS_MODULE_ADDRESS env var is set)'
+        default: 'ethereum',
+        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
       }
     },
-    required: ['specPath', 'repo', 'amount', 'asset']
+    required: ['specPath', 'repo', 'amount', 'asset', 'chain']
   }
 };

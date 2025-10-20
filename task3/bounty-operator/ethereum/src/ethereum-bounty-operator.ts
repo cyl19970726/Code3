@@ -58,19 +58,18 @@ export class EthereumBountyOperator implements BountyOperator {
     'function cancelBounty(uint256 bountyId) external',
 
     // Read functions
-    'function getBounty(uint256 bountyId) external view returns (tuple(uint256 bountyId, string taskId, bytes32 taskHash, address requester, address worker, uint256 amount, address asset, uint8 status, uint256 createdAt, uint256 acceptedAt, uint256 submittedAt, string submissionUrl, uint256 confirmedAt, uint256 coolingUntil, uint256 claimedAt))',
+    'function getBounty(uint256 bountyId) external view returns (tuple(uint256 bountyId, string taskId, bytes32 taskHash, address requester, address worker, uint256 amount, address asset, uint8 status, uint256 createdAt, uint256 acceptedAt, uint256 submittedAt, string submissionUrl, uint256 confirmedAt, uint256 claimedAt))',
     'function getBountyByTaskHash(bytes32 taskHash) external view returns (bool exists, uint256 bountyId)',
     'function getBountiesByRequester(address requester) external view returns (uint256[] memory)',
     'function getBountiesByWorker(address worker) external view returns (uint256[] memory)',
     'function getBountiesByStatus(uint8 status) external view returns (uint256[] memory)',
     'function listBounties(uint256 offset, uint256 limit) external view returns (uint256[] memory)',
-    'function COOLING_PERIOD() external view returns (uint256)',
 
     // Events
     'event BountyCreated(uint256 indexed bountyId, string taskId, bytes32 indexed taskHash, address indexed requester, uint256 amount, address asset)',
     'event BountyAccepted(uint256 indexed bountyId, address indexed worker, uint256 acceptedAt)',
     'event BountySubmitted(uint256 indexed bountyId, string submissionUrl, uint256 submittedAt)',
-    'event BountyConfirmed(uint256 indexed bountyId, uint256 confirmedAt, uint256 coolingUntil)',
+    'event BountyConfirmed(uint256 indexed bountyId, uint256 confirmedAt)',
     'event BountyClaimed(uint256 indexed bountyId, address indexed worker, uint256 amount, uint256 claimedAt)',
     'event BountyCancelled(uint256 indexed bountyId, uint256 cancelledAt)'
   ];
@@ -108,8 +107,21 @@ export class EthereumBountyOperator implements BountyOperator {
 
     const receipt = await tx.wait();
 
+    // Check if transaction was successful
+    if (receipt.status === 0) {
+      console.log(`\n❌ Transaction failed (reverted)`);
+      console.log(`   Tx Hash: ${receipt.hash}`);
+      console.log(`   Block: ${receipt.blockNumber}`);
+      throw new Error(`Transaction reverted. This may be because:
+1. A bounty already exists for this taskHash
+2. Insufficient gas
+3. Contract requirements not met
+Tx Hash: ${receipt.hash}`);
+    }
+
     // Parse BountyCreated event to get bountyId
     console.log(`\n🔍 Debug: Transaction receipt received`);
+    console.log(`   Status: ${receipt.status === 1 ? 'Success' : 'Failed'}`);
     console.log(`   Logs count: ${receipt.logs.length}`);
 
     const parsedEvents = receipt.logs
@@ -171,7 +183,7 @@ export class EthereumBountyOperator implements BountyOperator {
     const tx = await this.contract.confirmBounty(bountyId, confirmedAt, this.getGasOptions());
     const receipt = await tx.wait();
 
-    // Parse BountyConfirmed event to get coolingUntil
+    // Parse BountyConfirmed event to get confirmedAt
     const event = receipt.logs
       .map((log: any) => {
         try {
@@ -188,8 +200,7 @@ export class EthereumBountyOperator implements BountyOperator {
 
     return {
       txHash: receipt.hash,
-      confirmedAt: Number(event.args.confirmedAt),
-      coolingUntil: Number(event.args.coolingUntil)
+      confirmedAt: Number(event.args.confirmedAt)
     };
   }
 
@@ -293,7 +304,6 @@ export class EthereumBountyOperator implements BountyOperator {
       acceptedAt: Number(data.acceptedAt) || null,
       submittedAt: Number(data.submittedAt) || null,
       confirmedAt: Number(data.confirmedAt) || null,
-      coolingUntil: Number(data.coolingUntil) || null,
       claimedAt: Number(data.claimedAt) || null
     };
   }
@@ -317,14 +327,6 @@ export class EthereumBountyOperator implements BountyOperator {
     }
 
     return options;
-  }
-
-  /**
-   * Get cooling period in seconds
-   */
-  async getCoolingPeriod(): Promise<number> {
-    const period = await this.contract.COOLING_PERIOD();
-    return Number(period);
   }
 
   /**

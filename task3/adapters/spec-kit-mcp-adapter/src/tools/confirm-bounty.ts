@@ -4,8 +4,8 @@
  * Functionality:
  * 1. Verify PR submission exists
  * 2. Confirm bounty on-chain (User confirms Worker's submission)
- * 3. Enter 7-day cooling period
- * 4. Return txHash and coolingUntil timestamp
+ * 3. Enter cooling period
+ * 4. Return txHash and coolingUntil timestamp (if applicable)
  *
  * State validation:
  * - Bounty status must be Submitted
@@ -17,19 +17,23 @@ import { z } from 'zod';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { SpecKitDataOperator } from '../data-operator.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
+import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
+import type { BountyOperator } from '@code3-team/bounty-operator';
 import { ConcreteTask3Operator } from '@code3-team/orchestration';
 import { Network } from '@aptos-labs/ts-sdk';
+import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
 
 const ConfirmBountySchema = z.object({
   issueUrl: z.string().describe('GitHub Issue URL'),
-  moduleAddress: z.string().describe('Module address for bounty contract')
+  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
 });
 
 export async function confirmBounty(
   args: z.infer<typeof ConfirmBountySchema>,
   config: {
     githubToken: string;
-    aptosPrivateKey: string;
+    aptosPrivateKey?: string;
+    ethereumPrivateKey?: string;
     localSpecsDir: string;
     repo: string;
   }
@@ -42,13 +46,36 @@ export async function confirmBounty(
       localSpecsDir: config.localSpecsDir
     });
 
-    const bountyOperator = new AptosBountyOperator({
-      privateKey: config.aptosPrivateKey,
-      network: Network.TESTNET,
-      moduleAddress: args.moduleAddress
-    });
+    // 2. Create BountyOperator based on chain
+    let bountyOperator: BountyOperator;
+    let chainConfig;
 
-    // 2. Create Task3Operator instance and call confirmFlow
+    if (args.chain === 'ethereum') {
+      if (!config.ethereumPrivateKey) {
+        throw new Error('ETHEREUM_PRIVATE_KEY is required for Ethereum chain');
+      }
+
+      chainConfig = getEthereumConfig();
+      bountyOperator = new EthereumBountyOperator({
+        rpcUrl: chainConfig.rpcUrl,
+        privateKey: config.ethereumPrivateKey,
+        contractAddress: chainConfig.contractAddress
+      });
+    } else {
+      // Aptos
+      if (!config.aptosPrivateKey) {
+        throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
+      }
+
+      chainConfig = getAptosConfig();
+      bountyOperator = new AptosBountyOperator({
+        privateKey: config.aptosPrivateKey,
+        network: Network.TESTNET,
+        moduleAddress: chainConfig.contractAddress
+      });
+    }
+
+    // 3. Create Task3Operator instance and call confirmFlow
     const task3Operator = new ConcreteTask3Operator();
     const result = await task3Operator.confirmFlow({
       dataOperator,
@@ -56,9 +83,15 @@ export async function confirmBounty(
       taskUrl: args.issueUrl
     });
 
-    // 3. Return result
-    const coolingEndDate = new Date(result.coolingUntil * 1000).toISOString();
-    const message = `✅ Bounty confirmed successfully!\n\n- Tx Hash: ${result.txHash}\n- Confirmed At: ${new Date(result.confirmedAt * 1000).toISOString()}\n- Cooling Period Ends: ${coolingEndDate}\n\nThe worker can claim the bounty after the cooling period ends.`;
+    // 4. Return result
+    let message = `✅ Bounty confirmed successfully!\n\n- Tx Hash: ${result.txHash}\n- Confirmed At: ${new Date(result.confirmedAt * 1000).toISOString()}\n- Chain: ${args.chain} (${chainConfig.network})`;
+
+    if (result.coolingUntil) {
+      const coolingEndDate = new Date(result.coolingUntil * 1000).toISOString();
+      message += `\n- Cooling Period Ends: ${coolingEndDate}\n\nThe worker can claim the bounty after the cooling period ends.`;
+    } else {
+      message += `\n\nThe worker can now claim the bounty.`;
+    }
 
     return {
       content: [{ type: 'text', text: message }]
@@ -82,7 +115,7 @@ export const confirmBountyTool: Tool = {
 This tool:
 1. Verifies PR submission exists
 2. Confirms bounty on-chain (transitions Submitted → Confirmed)
-3. Starts 7-day cooling period
+3. Starts cooling period (if applicable on the chain)
 4. Returns tx hash and cooling period end time
 
 State validation:
@@ -96,11 +129,13 @@ Role: Executed by User to confirm Worker's submission`,
         type: 'string',
         description: 'GitHub Issue URL'
       },
-      moduleAddress: {
+      chain: {
         type: 'string',
-        description: 'Module address for bounty contract'
+        enum: ['aptos', 'ethereum'],
+        default: 'ethereum',
+        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
       }
     },
-    required: ['issueUrl', 'moduleAddress']
+    required: ['issueUrl', 'chain']
   }
 };

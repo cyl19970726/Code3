@@ -14,8 +14,11 @@ import { z } from 'zod';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { SpecKitDataOperator } from '../data-operator.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
+import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
+import type { BountyOperator } from '@code3-team/bounty-operator';
 import { ConcreteTask3Operator } from '@code3-team/orchestration';
 import { Network } from '@aptos-labs/ts-sdk';
+import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
 
 const SubmitBountySchema = z.object({
   issueUrl: z.string().describe('GitHub Issue URL'),
@@ -23,14 +26,15 @@ const SubmitBountySchema = z.object({
   summary: z.string().optional().describe('PR summary (optional)'),
   filesChanged: z.array(z.string()).optional().describe('List of changed files (optional)'),
   testing: z.string().optional().describe('Testing notes (optional)'),
-  moduleAddress: z.string().describe('Module address for bounty contract')
+  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
 });
 
 export async function submitBounty(
   args: z.infer<typeof SubmitBountySchema>,
   config: {
     githubToken: string;
-    aptosPrivateKey: string;
+    aptosPrivateKey?: string;
+    ethereumPrivateKey?: string;
     localSpecsDir: string;
     repo: string;
   }
@@ -43,13 +47,36 @@ export async function submitBounty(
       localSpecsDir: config.localSpecsDir
     });
 
-    const bountyOperator = new AptosBountyOperator({
-      privateKey: config.aptosPrivateKey,
-      network: Network.TESTNET,
-      moduleAddress: args.moduleAddress
-    });
+    // 2. Create BountyOperator based on chain
+    let bountyOperator: BountyOperator;
+    let chainConfig;
 
-    // 2. Create Task3Operator instance and call submitFlow
+    if (args.chain === 'ethereum') {
+      if (!config.ethereumPrivateKey) {
+        throw new Error('ETHEREUM_PRIVATE_KEY is required for Ethereum chain');
+      }
+
+      chainConfig = getEthereumConfig();
+      bountyOperator = new EthereumBountyOperator({
+        rpcUrl: chainConfig.rpcUrl,
+        privateKey: config.ethereumPrivateKey,
+        contractAddress: chainConfig.contractAddress
+      });
+    } else {
+      // Aptos
+      if (!config.aptosPrivateKey) {
+        throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
+      }
+
+      chainConfig = getAptosConfig();
+      bountyOperator = new AptosBountyOperator({
+        privateKey: config.aptosPrivateKey,
+        network: Network.TESTNET,
+        moduleAddress: chainConfig.contractAddress
+      });
+    }
+
+    // 3. Create Task3Operator instance and call submitFlow
     const task3Operator = new ConcreteTask3Operator();
     const result = await task3Operator.submitFlow({
       dataOperator,
@@ -63,8 +90,8 @@ export async function submitBounty(
       }
     });
 
-    // 3. Return result
-    const message = `✅ PR submitted successfully!\n\n- PR: ${result.submissionUrl}\n- Tx Hash: ${result.txHash}\n\nWaiting for PR review and merge.`;
+    // 4. Return result
+    const message = `✅ Work submitted successfully!\n\n- PR: ${result.submissionUrl}\n- Tx Hash: ${result.txHash}\n- Chain: ${args.chain} (${chainConfig.network})\n\nWaiting for PR review and merge.`;
 
     return {
       content: [{ type: 'text', text: message }]
@@ -74,7 +101,7 @@ export async function submitBounty(
       content: [
         {
           type: 'text',
-          text: `❌ Failed to submit PR: ${error.message}\n\nStack: ${error.stack}`
+          text: `❌ Failed to submit work: ${error.message}\n\nStack: ${error.stack}`
         }
       ]
     };
@@ -83,14 +110,16 @@ export async function submitBounty(
 
 export const submitBountyTool: Tool = {
   name: 'submit-bounty',
-  description: `Submit a PR for a spec-kit bounty.
+  description: `Submit work via PR for a spec-kit bounty (Worker role).
 
 This tool:
 1. Creates GitHub Pull Request
 2. Submits PR info on-chain
 3. Returns PR URL
 
-State validation: Bounty must be in Accepted status.`,
+State validation: Bounty must be in Accepted status.
+
+Role: Executed by Worker to submit completed work`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -115,11 +144,13 @@ State validation: Bounty must be in Accepted status.`,
         type: 'string',
         description: 'Testing notes (optional)'
       },
-      moduleAddress: {
+      chain: {
         type: 'string',
-        description: 'Module address for bounty contract'
+        enum: ['aptos', 'ethereum'],
+        default: 'ethereum',
+        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
       }
     },
-    required: ['issueUrl', 'branchName', 'moduleAddress']
+    required: ['issueUrl', 'branchName', 'chain']
   }
 };
