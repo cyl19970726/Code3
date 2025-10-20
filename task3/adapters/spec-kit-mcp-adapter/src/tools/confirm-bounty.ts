@@ -18,13 +18,13 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { SpecKitDataOperator } from '../data-operator.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
 import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
-import type { BountyOperator } from '@code3-team/bounty-operator';
-import { ConcreteTask3Operator } from '@code3-team/orchestration';
+import { BountyOperator, BountyStatus } from '@code3-team/bounty-operator';
 import { Network } from '@aptos-labs/ts-sdk';
 import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
 
 const ConfirmBountySchema = z.object({
-  issueUrl: z.string().describe('GitHub Issue URL'),
+  bountyId: z.string().describe('Bounty ID (from accept-bounty or publish-bounty)'),
+  issueUrl: z.string().optional().describe('GitHub Issue URL (optional, for updating metadata)'),
   chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
 });
 
@@ -39,14 +39,7 @@ export async function confirmBounty(
   }
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
-    // 1. Create operators
-    const dataOperator = new SpecKitDataOperator({
-      githubToken: config.githubToken,
-      repo: config.repo,
-      localSpecsDir: config.localSpecsDir
-    });
-
-    // 2. Create BountyOperator based on chain
+    // 1. Create BountyOperator based on chain
     let bountyOperator: BountyOperator;
     let chainConfig;
 
@@ -75,17 +68,44 @@ export async function confirmBounty(
       });
     }
 
-    // 3. Create Task3Operator instance and call confirmFlow
-    const task3Operator = new ConcreteTask3Operator();
-    const result = await task3Operator.confirmFlow({
-      dataOperator,
-      bountyOperator,
-      taskUrl: args.issueUrl
+    // 2. Validate bounty status (must be Submitted)
+    const bounty = await bountyOperator.getBounty({ bountyId: args.bountyId });
+    if (bounty.status !== BountyStatus.Submitted) {
+      throw new Error(
+        `Bounty status validation failed: expected Submitted, got ${bounty.status}`
+      );
+    }
+
+    // 3. Confirm bounty on-chain
+    const confirmedAt = Math.floor(Date.now() / 1000);
+    const confirmResult = await bountyOperator.confirmBounty({
+      bountyId: args.bountyId,
+      confirmedAt
     });
 
-    // 4. Return result
-    let message = `✅ Bounty confirmed successfully!\n\n- Tx Hash: ${result.txHash}\n- Confirmed At: ${new Date(result.confirmedAt * 1000).toISOString()}\n- Chain: ${args.chain} (${chainConfig.network})`;
+    // 4. Update Issue metadata if issueUrl provided
+    if (args.issueUrl) {
+      const [owner, repo] = args.issueUrl.match(/github\.com\/([^/]+\/[^/]+)/)![1].split('/');
+      const dataOperator = new SpecKitDataOperator({
+        githubToken: config.githubToken,
+        repo: `${owner}/${repo}`,
+        localSpecsDir: config.localSpecsDir
+      });
 
+      const metadata = await dataOperator.getTaskMetadata({ taskUrl: args.issueUrl });
+      await dataOperator.updateTaskMetadata({
+        taskUrl: args.issueUrl,
+        metadata: {
+          bounty: {
+            ...metadata.bounty,
+            confirmedAt: confirmResult.confirmedAt
+          }
+        }
+      });
+    }
+
+    // 5. Return result
+    let message = `✅ Bounty confirmed successfully!\n\n- Bounty ID: ${args.bountyId}\n- Tx Hash: ${confirmResult.txHash}\n- Confirmed At: ${new Date(confirmResult.confirmedAt * 1000).toISOString()}\n- Chain: ${args.chain} (${chainConfig.network})`;
 
     return {
       content: [{ type: 'text', text: message }]
@@ -107,10 +127,10 @@ export const confirmBountyTool: Tool = {
   description: `Confirm a submitted PR for a spec-kit bounty (User role).
 
 This tool:
-1. Verifies PR submission exists
+1. Validates bounty status on-chain (must be Submitted)
 2. Confirms bounty on-chain (transitions Submitted → Confirmed)
-3. Starts cooling period (if applicable on the chain)
-4. Returns tx hash and cooling period end time
+3. Optionally updates GitHub Issue metadata with confirmedAt timestamp
+4. Returns tx hash and confirmation timestamp
 
 State validation:
 - Bounty must be in Submitted status
@@ -119,9 +139,13 @@ Role: Executed by User to confirm Worker's submission`,
   inputSchema: {
     type: 'object',
     properties: {
+      bountyId: {
+        type: 'string',
+        description: 'Bounty ID (from accept-bounty or publish-bounty output)'
+      },
       issueUrl: {
         type: 'string',
-        description: 'GitHub Issue URL'
+        description: 'GitHub Issue URL (optional, for updating metadata)'
       },
       chain: {
         type: 'string',
@@ -130,6 +154,6 @@ Role: Executed by User to confirm Worker's submission`,
         description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
       }
     },
-    required: ['issueUrl', 'chain']
+    required: ['bountyId', 'chain']
   }
 };

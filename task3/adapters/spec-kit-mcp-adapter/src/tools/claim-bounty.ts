@@ -14,16 +14,14 @@
 
 import { z } from 'zod';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { SpecKitDataOperator } from '../data-operator.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
 import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
-import type { BountyOperator } from '@code3-team/bounty-operator';
-import { ConcreteTask3Operator } from '@code3-team/orchestration';
+import { BountyOperator, BountyStatus } from '@code3-team/bounty-operator';
 import { Network } from '@aptos-labs/ts-sdk';
 import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
 
 const ClaimBountySchema = z.object({
-  issueUrl: z.string().describe('GitHub Issue URL'),
+  bountyId: z.string().describe('Bounty ID (from accept-bounty or publish-bounty)'),
   chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
 });
 
@@ -38,14 +36,7 @@ export async function claimBounty(
   }
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   try {
-    // 1. Create operators
-    const dataOperator = new SpecKitDataOperator({
-      githubToken: config.githubToken,
-      repo: config.repo,
-      localSpecsDir: config.localSpecsDir
-    });
-
-    // 2. Create BountyOperator based on chain
+    // 1. Create BountyOperator based on chain
     let bountyOperator: BountyOperator;
     let chainConfig;
 
@@ -74,16 +65,21 @@ export async function claimBounty(
       });
     }
 
-    // 3. Create Task3Operator instance and call claimFlow
-    const task3Operator = new ConcreteTask3Operator();
-    const result = await task3Operator.claimFlow({
-      dataOperator,
-      bountyOperator,
-      taskUrl: args.issueUrl
+    // 2. Validate bounty status (must be Confirmed)
+    const bounty = await bountyOperator.getBounty({ bountyId: args.bountyId });
+    if (bounty.status !== BountyStatus.Confirmed) {
+      throw new Error(
+        `Bounty status validation failed: expected Confirmed, got ${bounty.status}`
+      );
+    }
+
+    // 3. Claim payout on-chain
+    const claimResult = await bountyOperator.claimPayout({
+      bountyId: args.bountyId
     });
 
     // 4. Return result
-    const message = `✅ Payout claimed successfully!\n\n- Amount: ${result.amount} ${result.asset}\n- Tx Hash: ${result.txHash}\n- Chain: ${args.chain} (${chainConfig.network})\n\nCongratulations! 🎉`;
+    const message = `✅ Payout claimed successfully!\n\n- Bounty ID: ${args.bountyId}\n- Amount: ${bounty.amount} ${bounty.asset}\n- Tx Hash: ${claimResult.txHash}\n- Chain: ${args.chain} (${chainConfig.network})\n\nCongratulations! 🎉`;
 
     return {
       content: [{ type: 'text', text: message }]
@@ -105,22 +101,20 @@ export const claimBountyTool: Tool = {
   description: `Claim payout for a completed spec-kit bounty (Worker role).
 
 This tool:
-1. Verifies PR is merged (from on-chain status)
-2. Verifies cooling period has ended (if applicable on the chain)
-3. Claims payout on-chain
-4. Returns tx hash and amount
+1. Validates bounty status on-chain (must be Confirmed)
+2. Claims payout on-chain
+3. Returns tx hash and amount
 
 State validation:
 - Bounty must be in Confirmed status
-- Cooling period must have ended (if applicable on the chain)
 
 Role: Executed by Worker to claim earned bounty`,
   inputSchema: {
     type: 'object',
     properties: {
-      issueUrl: {
+      bountyId: {
         type: 'string',
-        description: 'GitHub Issue URL'
+        description: 'Bounty ID (from accept-bounty output)'
       },
       chain: {
         type: 'string',
@@ -129,6 +123,6 @@ Role: Executed by Worker to claim earned bounty`,
         description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
       }
     },
-    required: ['issueUrl', 'chain']
+    required: ['bountyId', 'chain']
   }
 };
