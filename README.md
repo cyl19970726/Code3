@@ -174,10 +174,10 @@ flowchart TD
 
 ### 🔐 Security Guarantees
 
-- ✅ **On-Chain Authority**: Core state stored in Aptos contracts
-- ✅ **7-Day Cooling Period**: Cooling period after PR merge, sufficient time to discover issues
+- ✅ **On-Chain Authority**: Core state stored in Ethereum smart contracts
+- ✅ **Transparent & Verifiable**: All bounty states recorded on-chain
 - ✅ **Zero Key Storage**: Dashboard doesn't save any private keys
-- ✅ **Idempotency Guarantee**: Based on issue_hash, bounty_id, pr_url idempotency keys
+- ✅ **Idempotency Guarantee**: Based on taskHash, bountyId, submissionUrl idempotency keys
 
 ---
 
@@ -187,12 +187,12 @@ Complete documentation in [Code3/docs/](./docs/) directory:
 
 | Document | Description |
 |----------|-------------|
-| [01-Datastream](./docs/01-datastream.md) | Complete data flow from requirement publishing to bounty settlement |
-| [02-Architecture](./docs/02-architecture.md) | Tech stack, system layers, module responsibilities + user quick start guide |
-| [03-Package Structure](./docs/03-packages-structure.md) | Monorepo structure, build order, environment variables |
-| [04-Quick Start](./docs/04-quickstart.md) | 5-minute local startup, contract deployment, end-to-end testing |
-| [05-Data Model](./docs/05-data-model.md) | Core data structures, type mapping, state machine (single source of truth) |
-| [06-Interfaces](./docs/06-interfaces.md) | 23 MCP tools, contract functions, API endpoints |
+| [01-Data Model](./docs/01-data-model.md) | Core data structures, type mapping, state machine (single source of truth) |
+| [02-Interfaces](./docs/02-interfaces.md) | MCP tools, contract functions, API endpoints |
+| [03-Architecture](./docs/03-architecture.md) | Tech stack, system layers, module responsibilities |
+| [04-Datastream](./docs/04-datastream.md) | Complete data flow from requirement publishing to bounty settlement |
+| [05-Package Structure](./docs/05-packages-structure.md) | Monorepo structure, build order, environment variables |
+| [06-Quick Start](./docs/06-quickstart.md) | 5-minute local startup, contract deployment, end-to-end testing |
 | [07-UI/UX Design](./docs/07-ui-ux.md) | Dashboard interface, interaction flow, visual specifications |
 | [08-Workflow Guide](./docs/08-workflow.md) | Complete operation steps for Requester/Worker/Reviewer |
 | [09-Security](./docs/09-security.md) | Key management, permission boundaries, audit mechanisms |
@@ -207,13 +207,13 @@ Contributions welcome! See [CLAUDE.md](./CLAUDE.md) for development workflow spe
 
 ### Modifying Data Structures
 
-⭐ **Mandatory**: Any data structure modifications must first update [docs/05-data-model.md](./docs/05-data-model.md), then update code.
+⭐ **Mandatory**: Any data structure modifications must first update [docs/01-data-model.md](./docs/01-data-model.md), then update code.
 
 ### Adding MCP Tools
 
-1. Define interface in [docs/06-interfaces.md](./docs/06-interfaces.md)
+1. Define interface in [docs/02-interfaces.md](./docs/02-interfaces.md)
 2. Implement in corresponding MCP package (`spec-mcp/*`)
-3. Update tool inventory in [docs/02-architecture.md](./docs/02-architecture.md)
+3. Update tool inventory in [docs/03-architecture.md](./docs/03-architecture.md)
 4. Update usage examples in [docs/08-workflow.md](./docs/08-workflow.md)
 
 ---
@@ -228,11 +228,11 @@ MIT License - See [LICENSE](./LICENSE)
 
 - **GitHub**: [cyl19970726/Code3](https://github.com/cyl19970726/Code3)
 - **Documentation**: [Code3/docs/](./docs/)
-- **Aptos Testnet Contract**: `0xafd0c08dbf36230f9b96eb1d23ff7ee223ad40be47917a0aba310ed90ac422a1`
+- **Ethereum Sepolia Contract**: `0x8A0f158B6568BCf1F488fd4e4D7835686FE5a292`
 
 ---
 
 <div align="center">
   <p>Built with ❤️ by the Code3 Team</p>
-  <p>Powered by <a href="https://aptos.dev">Aptos</a> • Designed for AI Agents</p>
+  <p>Powered by <a href="https://ethereum.org">Ethereum</a> • Designed for AI Agents</p>
 </div>
