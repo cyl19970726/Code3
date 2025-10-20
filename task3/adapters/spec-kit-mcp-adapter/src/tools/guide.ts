@@ -43,7 +43,7 @@ graph TD
 ## Example
 
 \`\`\`typescript
-// 1. Generate spec
+// 1. Generate spec (using spec-kit-mcp)
 plan({ feature: "Add JWT authentication" })
 clarify({ specId: "001", details: "Use bcrypt, support refresh tokens" })
 
@@ -51,10 +51,17 @@ clarify({ specId: "001", details: "Use bcrypt, support refresh tokens" })
 publishBounty({
   specPath: "specs/001/spec.md",
   repo: "org/repo",
-  chain: "ethereum-sepolia",
-  amount: 0.1,  // 0.1 ETH
-  title: "Implement JWT Auth"
+  chain: "ethereum",
+  amount: "100000000000000000",  // 0.1 ETH in Wei
+  asset: "ETH",
+  branch: "main"  // Optional: defaults to 'main'
 })
+
+// Output:
+// ✅ Bounty published successfully!
+// - Issue: https://github.com/org/repo/issues/42
+// - Bounty ID: 1
+// - Tx Hash: 0x...
 
 // 3. Wait for Worker to complete & submit PR
 
@@ -63,7 +70,7 @@ publishBounty({
 // 5. Confirm completion
 confirmBounty({
   issueUrl: "https://github.com/org/repo/issues/42",
-  chain: "ethereum-sepolia"
+  chain: "ethereum"
 })
 
 // Worker will then claim the 0.1 ETH
@@ -78,31 +85,33 @@ const WORKER_GUIDE = `# Worker Guide: Completing Bounty Tasks
 \`\`\`mermaid
 graph TD
     A[Worker 看到 GitHub Issue] --> B[1. spec-kit-mcp-adapter.accept-bounty]
-    B --> C[下载整个代码库]
-    C --> D[读取 specs/00x/spec.md]
+    B --> C[获取仓库信息 + 链上接受]
+    C --> D[手动 git clone 仓库]
+    D --> E[读取 repository.specPath]
 
-    D --> E[2. spec-kit-mcp.plan]
-    E --> F[生成实现计划]
-    F --> G[3. spec-kit-mcp.tasks]
-    G --> H[拆分任务清单]
-    H --> I[4. spec-kit-mcp.analyze]
-    I --> J[分析代码库]
-    J --> K[5. spec-kit-mcp.implement]
-    K --> L[实现功能]
+    E --> F[2. spec-kit-mcp.plan]
+    F --> G[生成实现计划]
+    G --> H[3. spec-kit-mcp.tasks]
+    H --> I[拆分任务清单]
+    I --> J[4. spec-kit-mcp.analyze]
+    J --> K[分析代码库]
+    K --> L[5. spec-kit-mcp.implement]
+    L --> M[实现功能]
 
-    L --> M[6. spec-kit-mcp-adapter.submit-bounty]
-    M --> N[提交 PR URL 到链上]
+    M --> N[6. git push worker branch]
+    N --> O[7. spec-kit-mcp-adapter.submit-bounty]
+    O --> P[提交 PR URL 到链上]
 
-    N --> O[等待 User merge + confirm]
-    O --> P[7. spec-kit-mcp-adapter.claim-bounty]
-    P --> Q[领取奖励]
+    P --> Q[等待 User merge + confirm]
+    Q --> R[8. spec-kit-mcp-adapter.claim-bounty]
+    R --> S[领取奖励]
 \`\`\`
 
 ## Tools
 
 ### spec-kit-mcp-adapter (悬赏流程)
-1. **accept-bounty** - 接受任务 + 下载代码库
-2. **submit-bounty** - 提交 PR URL
+1. **accept-bounty** - 接受任务 + 获取仓库信息（Worker 需手动 clone）
+2. **submit-bounty** - 提交 PR URL 到链上
 3. **claim-bounty** - 领取奖励
 
 ### spec-kit-mcp (功能实现)
@@ -120,42 +129,61 @@ graph TD
 // 1. Accept bounty
 acceptBounty({
   issueUrl: "https://github.com/org/repo/issues/42",
-  chain: "ethereum-sepolia",
-  localDir: "./workspace/repo"
+  chain: "ethereum"
 })
 
-// 2. Read spec context (optional, to understand requirements)
-specContext({ specPath: "./workspace/repo/specs/001/spec.md" })
+// Output shows:
+// ✅ Bounty accepted successfully!
+// - Bounty ID: 1
+// - Tx Hash: 0x...
+//
+// 📦 Repository Setup Instructions:
+// git clone https://github.com/org/repo.git --branch main
+// cd repo
+// git checkout -b worker-bounty-1
+// cat ./specs/001/spec.md
+//
+// 📁 Source branch: main
+// 📄 Spec file: ./specs/001/spec.md
 
-// 3-6. Implement using spec-kit-mcp
-plan({ specPath: "./workspace/repo/specs/001/spec.md" })
-planContext({ planPath: "./workspace/repo/specs/001/plan.md" })  // Read plan context
-tasks({ planPath: "./workspace/repo/specs/001/plan.md" })
-tasksContext({ tasksPath: "./workspace/repo/specs/001/tasks.md" })  // Read tasks context
-analyze({ projectPath: "./workspace/repo", focus: "auth" })
+// 2. Clone repository (manually execute the commands from output)
+// $ git clone https://github.com/org/repo.git --branch main
+// $ cd repo
+// $ git checkout -b worker-bounty-1
+
+// 3. Read spec from repository
+specContext({ specPath: "./repo/specs/001/spec.md" })
+
+// 4-7. Implement using spec-kit-mcp
+plan({ specPath: "./repo/specs/001/spec.md" })
+planContext({ planPath: "./repo/specs/001/plan.md" })  // Read plan context
+tasks({ planPath: "./repo/specs/001/plan.md" })
+tasksContext({ tasksPath: "./repo/specs/001/tasks.md" })  // Read tasks context
+analyze({ projectPath: "./repo", focus: "auth" })
 implement({
   taskDescription: "Implement JWT auth",
-  specPath: "./workspace/repo/specs/001/spec.md"
+  specPath: "./repo/specs/001/spec.md"
 })
 
-// 7. Create PR manually (git)
-// git checkout -b feat/jwt-auth
-// git add . && git commit -m "feat: JWT auth"
-// git push && gh pr create
+// 8. Commit and push (manually)
+// $ git add . && git commit -m "feat: JWT auth"
+// $ git push origin worker-bounty-1
 
-// 8. Submit PR
+// 9. Submit PR
 submitBounty({
   issueUrl: "https://github.com/org/repo/issues/42",
-  prUrl: "https://github.com/org/repo/pull/123",
-  chain: "ethereum-sepolia"
+  branchName: "worker-bounty-1",
+  chain: "ethereum"
 })
 
-// 9. Wait for User to merge + confirm
+// Output shows PR URL that was auto-created
 
-// 10. Claim payment
+// 10. Wait for User to merge + confirm
+
+// 11. Claim payment
 claimBounty({
   issueUrl: "https://github.com/org/repo/issues/42",
-  chain: "ethereum-sepolia"
+  chain: "ethereum"
 })
 \`\`\`
 `;
