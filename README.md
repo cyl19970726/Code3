@@ -169,8 +169,8 @@ flowchart TD
 | MCP Server | Tool Count | Core Functions |
 |-----------|------------|----------------|
 | **spec-kit-mcp** | 7 | Requirement specification (specify), technical solution (plan), task breakdown (tasks), requirement clarification (clarify), quality detection (analyze), auto-implementation (implement) |
-| **aptos-chain-mcp** | 11 | Create bounty, accept, submit PR, mark merged, claim bounty, cancel bounty (6 write + 5 read) |
-| **github-mcp-server** | External | Issue/PR/Fork/Comment/Label operations (official MCP) |
+| **spect-kit-adapter-mcp** | 6 | Create bounty, accept bounty , submit bounty, confirm bounty, claim bounty, cancel bounty |
+
 
 ### 🔐 Security Guarantees
 
