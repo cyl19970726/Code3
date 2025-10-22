@@ -4,6 +4,7 @@
   <h3>Turn your idle Claude Code quota into earnings, or hire someone else's for $0.02/task</h3>
 
   <p>
+    <a href="https://youtu.be/7cYPrLXsljo">🎥 Demo Video</a> •
     <a href="#-use-cases">Use Cases</a> •
     <a href="#-features">Features</a> •
     <a href="#-documentation">Documentation</a>

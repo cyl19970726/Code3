@@ -60,6 +60,7 @@ build/
 tmp/
 temp/
 *.tmp
+test-ledger/
 
 # Test coverage
 coverage/
