@@ -42,10 +42,12 @@
     "@code3-team/bounty-operator": "workspace:*",
     "@coral-xyz/anchor": "^0.32.1",
     "@solana/web3.js": "^1.95.0",
+    "bn.js": "^5.2.2",
     "bs58": "^5.0.0",
     "ethers": "^6.13.0"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.2.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",

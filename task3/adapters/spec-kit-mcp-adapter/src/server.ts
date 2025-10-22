@@ -32,6 +32,7 @@ const config = {
   githubToken: process.env.GITHUB_TOKEN,
   aptosPrivateKey: process.env.APTOS_PRIVATE_KEY,
   ethereumPrivateKey: process.env.ETHEREUM_PRIVATE_KEY,
+  solanaPrivateKey: process.env.SOLANA_PRIVATE_KEY,
   localSpecsDir: process.env.LOCAL_SPECS_DIR || './specs',
   defaultRepo: process.env.GITHUB_REPO || '' // Optional: default repo for all operations
 };
@@ -154,6 +155,7 @@ async function main() {
   console.error(`  - GitHub Token: ${config.githubToken ? '***' : 'NOT SET'}`);
   console.error(`  - Aptos Private Key: ${config.aptosPrivateKey ? '***' : 'NOT SET'}`);
   console.error(`  - Ethereum Private Key: ${config.ethereumPrivateKey ? '***' : 'NOT SET'}`);
+  console.error(`  - Solana Private Key: ${config.solanaPrivateKey ? '***' : 'NOT SET'}`);
 }
 
 main().catch((error) => {

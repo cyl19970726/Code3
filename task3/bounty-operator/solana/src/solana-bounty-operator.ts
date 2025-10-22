@@ -7,7 +7,8 @@ import {
   sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
-import { Program, AnchorProvider, Wallet, BN } from '@coral-xyz/anchor';
+import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
+import BN from 'bn.js';
 import type {
   BountyOperator,
   CreateBountyParams,
