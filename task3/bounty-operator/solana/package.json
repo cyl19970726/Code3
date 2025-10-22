@@ -1,0 +1,63 @@
+{
+  "name": "@code3-team/bounty-operator-solana",
+  "version": "0.1.0",
+  "description": "Solana Bounty Operator - BountyOperator implementation for Solana blockchain",
+  "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "generate:keypair": "tsx scripts/generate-keypair.ts",
+    "generate:sponsor": "tsx scripts/generate-keypair.ts --name sponsor",
+    "generate:worker": "tsx scripts/generate-keypair.ts --name worker",
+    "check:rpc": "tsx scripts/check-rpc.ts",
+    "check:balance": "tsx scripts/check-balance.ts",
+    "check:all": "tsx scripts/check-rpc.ts && tsx scripts/check-balance.ts",
+    "airdrop": "tsx scripts/check-balance.ts --airdrop",
+    "build": "anchor build && tsc",
+    "test": "anchor test",
+    "test:e2e": "vitest run src/e2e-solana.test.ts",
+    "test:watch": "vitest watch",
+    "deploy:devnet": "anchor deploy --provider.cluster devnet",
+    "deploy:mainnet": "anchor deploy --provider.cluster mainnet-beta",
+    "clean": "anchor clean && rm -rf dist",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\""
+  },
+  "keywords": [
+    "solana",
+    "bounty",
+    "blockchain",
+    "anchor",
+    "web3"
+  ],
+  "author": "Code3 Team",
+  "license": "MIT",
+  "dependencies": {
+    "@code3-team/bounty-operator": "workspace:*",
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^5.0.0",
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "dotenv": "^16.4.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

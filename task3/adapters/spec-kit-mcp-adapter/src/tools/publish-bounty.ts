@@ -16,18 +16,19 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { SpecKitDataOperator } from '../data-operator.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
 import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
+import { SolanaBountyOperator } from '@code3-team/bounty-operator-solana';
 import type { BountyOperator } from '@code3-team/bounty-operator';
 import { ConcreteTask3Operator } from '@code3-team/orchestration';
 import { Network } from '@aptos-labs/ts-sdk';
 import fs from 'fs/promises';
-import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
+import { getEthereumConfig, getAptosConfig, getSolanaConfig } from '../chain-config.js';
 
 const PublishBountySchema = z.object({
   specPath: z.string().describe('Local spec.md file path (e.g., "specs/001/spec.md")'),
   repo: z.string().describe('GitHub repository (format: "owner/repo")'),
-  amount: z.string().describe('Bounty amount (e.g., "100000000" for 1 APT, or "10000000000000000" for 0.01 ETH)'),
-  asset: z.string().describe('Asset symbol (e.g., "APT", "ETH")'),
-  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'),
+  amount: z.string().describe('Bounty amount (e.g., "100000000" for 1 APT, or "10000000000000000" for 0.01 ETH, or "5000000" for 0.005 SOL)'),
+  asset: z.string().describe('Asset symbol (e.g., "APT", "ETH", "SOL")'),
+  chain: z.enum(['aptos', 'ethereum', 'solana']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet, solana=Solana localhost)'),
   branch: z.string().default('main').describe('Source branch (Requester\'s working branch for Worker to clone and PR back to)')
 });
 
@@ -37,6 +38,7 @@ export async function publishBounty(
     githubToken: string;
     aptosPrivateKey?: string;
     ethereumPrivateKey?: string;
+    solanaPrivateKey?: string;
     localSpecsDir: string;
   }
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
@@ -66,8 +68,7 @@ export async function publishBounty(
         privateKey: config.ethereumPrivateKey,
         contractAddress: chainConfig.contractAddress
       });
-    } else {
-      // Aptos
+    } else if (args.chain === 'aptos') {
       if (!config.aptosPrivateKey) {
         throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
       }
@@ -77,6 +78,18 @@ export async function publishBounty(
         privateKey: config.aptosPrivateKey,
         network: Network.TESTNET,
         moduleAddress: chainConfig.contractAddress
+      });
+    } else {
+      // Solana
+      if (!config.solanaPrivateKey) {
+        throw new Error('SOLANA_PRIVATE_KEY is required for Solana chain');
+      }
+
+      chainConfig = getSolanaConfig();
+      bountyOperator = new SolanaBountyOperator({
+        rpcUrl: chainConfig.rpcUrl,
+        privateKey: config.solanaPrivateKey,
+        programId: chainConfig.contractAddress
       });
     }
 
@@ -160,7 +173,8 @@ Idempotency: If bounty already exists (same taskHash), returns existing bounty i
 
 Supported chains:
 - aptos: Aptos testnet
-- ethereum: Ethereum Sepolia testnet`,
+- ethereum: Ethereum Sepolia testnet
+- solana: Solana localhost`,
   inputSchema: {
     type: 'object',
     properties: {
@@ -174,17 +188,17 @@ Supported chains:
       },
       amount: {
         type: 'string',
-        description: 'Bounty amount in smallest unit (e.g., "100000000" for 1 APT, "10000000000000000" for 0.01 ETH)'
+        description: 'Bounty amount in smallest unit (e.g., "100000000" for 1 APT, "10000000000000000" for 0.01 ETH, "5000000" for 0.005 SOL)'
       },
       asset: {
         type: 'string',
-        description: 'Asset symbol (e.g., "APT" for Aptos, "ETH" for Ethereum)'
+        description: 'Asset symbol (e.g., "APT" for Aptos, "ETH" for Ethereum, "SOL" for Solana)'
       },
       chain: {
         type: 'string',
-        enum: ['aptos', 'ethereum'],
+        enum: ['aptos', 'ethereum', 'solana'],
         default: 'ethereum',
-        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
+        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet, solana=Solana localhost)'
       },
       branch: {
         type: 'string',
