@@ -46,3 +46,26 @@ export function getEthereumConfig(): ChainConfig {
 export function getAptosConfig(): ChainConfig {
   return APTOS_CONFIGS.testnet;
 }
+
+/**
+ * Solana Chain Configurations
+ */
+export const SOLANA_CONFIGS: Record<string, ChainConfig> = {
+  localhost: {
+    rpcUrl: 'http://localhost:8899',
+    contractAddress: '5bjKDPsreaQrZ2dNoyDbHsUwqJukmDMi5qQheYHVFzD4', // Deployed to localhost
+    network: 'localhost'
+  },
+  devnet: {
+    rpcUrl: 'https://api.devnet.solana.com',
+    contractAddress: '5bjKDPsreaQrZ2dNoyDbHsUwqJukmDMi5qQheYHVFzD4', // TODO: Deploy to devnet
+    network: 'devnet'
+  }
+};
+
+/**
+ * Get default Solana configuration
+ */
+export function getSolanaConfig(): ChainConfig {
+  return SOLANA_CONFIGS.localhost;
+}

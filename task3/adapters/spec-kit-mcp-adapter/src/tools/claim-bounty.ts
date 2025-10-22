@@ -16,13 +16,14 @@ import { z } from 'zod';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { AptosBountyOperator } from '@code3-team/bounty-operator-aptos';
 import { EthereumBountyOperator } from '@code3-team/bounty-operator-ethereum';
+import { SolanaBountyOperator } from '@code3-team/bounty-operator-solana';
 import { BountyOperator, BountyStatus } from '@code3-team/bounty-operator';
 import { Network } from '@aptos-labs/ts-sdk';
-import { getEthereumConfig, getAptosConfig } from '../chain-config.js';
+import { getEthereumConfig, getAptosConfig, getSolanaConfig } from '../chain-config.js';
 
 const ClaimBountySchema = z.object({
   bountyId: z.string().describe('Bounty ID (from accept-bounty or publish-bounty)'),
-  chain: z.enum(['aptos', 'ethereum']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)')
+  chain: z.enum(['aptos', 'ethereum', 'solana']).default('ethereum').describe('Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet, solana=Solana localhost)')
 });
 
 export async function claimBounty(
@@ -31,6 +32,7 @@ export async function claimBounty(
     githubToken: string;
     aptosPrivateKey?: string;
     ethereumPrivateKey?: string;
+    solanaPrivateKey?: string;
     localSpecsDir: string;
     repo: string;
   }
@@ -51,8 +53,7 @@ export async function claimBounty(
         privateKey: config.ethereumPrivateKey,
         contractAddress: chainConfig.contractAddress
       });
-    } else {
-      // Aptos
+    } else if (args.chain === 'aptos') {
       if (!config.aptosPrivateKey) {
         throw new Error('APTOS_PRIVATE_KEY is required for Aptos chain');
       }
@@ -62,6 +63,18 @@ export async function claimBounty(
         privateKey: config.aptosPrivateKey,
         network: Network.TESTNET,
         moduleAddress: chainConfig.contractAddress
+      });
+    } else {
+      // Solana
+      if (!config.solanaPrivateKey) {
+        throw new Error('SOLANA_PRIVATE_KEY is required for Solana chain');
+      }
+
+      chainConfig = getSolanaConfig();
+      bountyOperator = new SolanaBountyOperator({
+        rpcUrl: chainConfig.rpcUrl,
+        privateKey: config.solanaPrivateKey,
+        programId: chainConfig.contractAddress
       });
     }
 
@@ -118,9 +131,9 @@ Role: Executed by Worker to claim earned bounty`,
       },
       chain: {
         type: 'string',
-        enum: ['aptos', 'ethereum'],
+        enum: ['aptos', 'ethereum', 'solana'],
         default: 'ethereum',
-        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet)'
+        description: 'Target blockchain (ethereum=Sepolia testnet, aptos=Aptos testnet, solana=Solana localhost)'
       }
     },
     required: ['bountyId', 'chain']

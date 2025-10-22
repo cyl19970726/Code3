@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 
 interface ChainSelectorProps {
-  selectedChain: 'all' | 'aptos' | 'ethereum';
-  onSelectChain: (chain: 'all' | 'aptos' | 'ethereum') => void;
+  selectedChain: 'all' | 'aptos' | 'ethereum' | 'solana';
+  onSelectChain: (chain: 'all' | 'aptos' | 'ethereum' | 'solana') => void;
 }
 
 export function ChainSelector({ selectedChain, onSelectChain }: ChainSelectorProps) {
@@ -27,6 +27,12 @@ export function ChainSelector({ selectedChain, onSelectChain }: ChainSelectorPro
         onClick={() => onSelectChain('ethereum')}
       >
         ⟠ Ethereum
+      </Button>
+      <Button
+        variant={selectedChain === 'solana' ? 'default' : 'outline'}
+        onClick={() => onSelectChain('solana')}
+      >
+        ◎ Solana
       </Button>
     </div>
   );
