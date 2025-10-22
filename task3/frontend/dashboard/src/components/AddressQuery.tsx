@@ -16,7 +16,7 @@ import { isValidAddress } from '@/lib/utils';
 import { Search, X } from 'lucide-react';
 
 interface AddressQueryProps {
-  selectedChain: 'all' | 'aptos' | 'ethereum';
+  selectedChain: 'all' | 'aptos' | 'ethereum' | 'solana';
   onQuery: (params: Record<string, string>) => void;
 }
 
@@ -38,12 +38,13 @@ export function AddressQuery({ selectedChain, onQuery }: AddressQueryProps) {
         return;
       }
     } else {
-      // For "all chains", check if it's valid for either chain
+      // For "all chains", check if it's valid for any chain
       const isEthValid = isValidAddress(address, 'ethereum');
       const isAptosValid = isValidAddress(address, 'aptos');
+      const isSolanaValid = isValidAddress(address, 'solana');
 
-      if (!isEthValid && !isAptosValid) {
-        setError('Invalid address format (not Ethereum or Aptos)');
+      if (!isEthValid && !isAptosValid && !isSolanaValid) {
+        setError('Invalid address format (not Ethereum, Aptos, or Solana)');
         return;
       }
     }
@@ -76,7 +77,13 @@ export function AddressQuery({ selectedChain, onQuery }: AddressQueryProps) {
       <div className="flex items-center gap-2">
         <Label className="text-sm font-semibold">Query by Address</Label>
         <Badge variant="outline" className="text-xs">
-          {selectedChain === 'all' ? '🌐 All Chains' : selectedChain === 'aptos' ? '🔷 Aptos' : '⟠ Ethereum'}
+          {selectedChain === 'all'
+            ? '🌐 All Chains'
+            : selectedChain === 'aptos'
+            ? '🔷 Aptos'
+            : selectedChain === 'ethereum'
+            ? '⟠ Ethereum'
+            : '◎ Solana'}
         </Badge>
       </div>
 

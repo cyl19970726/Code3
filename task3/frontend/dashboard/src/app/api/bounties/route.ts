@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { AptosOperator } from '@/lib/aptos-operator';
 import { EthereumOperator } from '@/lib/ethereum-operator';
+import { SolanaOperator } from '@/lib/solana-operator';
 import { GitHubClient } from '@/lib/github-client';
 import { Bounty } from '@/lib/types';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const chain = searchParams.get('chain') as 'aptos' | 'ethereum' | 'all' | null;
+    const chain = searchParams.get('chain') as 'aptos' | 'ethereum' | 'solana' | 'all' | null;
     const status = searchParams.get('status');
     const sponsor = searchParams.get('sponsor');
     const worker = searchParams.get('worker');
@@ -33,6 +34,16 @@ export async function GET(request: Request) {
         allBounties.push(...ethBounties);
       } catch (error) {
         console.error('Error fetching Ethereum bounties:', error);
+      }
+    }
+
+    if (!chain || chain === 'all' || chain === 'solana') {
+      try {
+        const solanaOperator = new SolanaOperator();
+        const solanaBounties = await solanaOperator.listBounties();
+        allBounties.push(...solanaBounties);
+      } catch (error) {
+        console.error('Error fetching Solana bounties:', error);
       }
     }
 

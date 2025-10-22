@@ -12,7 +12,7 @@ import { Bounty, BountyStatus } from '@/lib/types';
 import { AlertCircle } from 'lucide-react';
 
 export default function Home() {
-  const [selectedChain, setSelectedChain] = useState<'all' | 'aptos' | 'ethereum'>('all');
+  const [selectedChain, setSelectedChain] = useState<'all' | 'aptos' | 'ethereum' | 'solana'>('all');
   const [statusFilter, setStatusFilter] = useState<BountyStatus | 'all'>('all');
   const [addressQuery, setAddressQuery] = useState<Record<string, string>>({});
 
@@ -56,7 +56,7 @@ export default function Home() {
       <div className="space-y-2">
         <h1 className="text-4xl font-bold">Code3 Bounty Dashboard</h1>
         <p className="text-muted-foreground">
-          Explore bounties across Aptos and Ethereum chains
+          Explore bounties across Aptos, Ethereum, and Solana chains
         </p>
       </div>
 

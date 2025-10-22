@@ -10,7 +10,7 @@ export interface Bounty {
   amount: string;
   asset: string;
   status: BountyStatus;
-  chain: 'aptos' | 'ethereum';
+  chain: 'aptos' | 'ethereum' | 'solana';
   createdAt: number;
   acceptedAt?: number;
   submittedAt?: number;

@@ -65,7 +65,7 @@ export function formatAmount(amount: string, asset?: string): string {
 /**
  * Validate address format for the given chain
  */
-export function isValidAddress(address: string, chain: 'aptos' | 'ethereum'): boolean {
+export function isValidAddress(address: string, chain: 'aptos' | 'ethereum' | 'solana'): boolean {
   if (!address) {
     return false;
   }
@@ -78,6 +78,12 @@ export function isValidAddress(address: string, chain: 'aptos' | 'ethereum'): bo
   if (chain === 'aptos') {
     // Aptos address: 0x followed by up to 64 hex characters (can be shorter)
     return /^0x[0-9a-fA-F]{1,64}$/.test(address);
+  }
+
+  if (chain === 'solana') {
+    // Solana address: Base58 encoded, typically 32-44 characters
+    // Valid Base58 characters: 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
   }
 
   return false;
